@@ -1,0 +1,12 @@
+language: r
+pandoc_version: 2.2.1
+install:
+ - curl -L https://cpanmin.us | sudo perl - --sudo App::cpanminus
+ - sudo cpanm Pandoc::Elements
+script:
+ - make
+ - cp kukulu.html index.html
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN

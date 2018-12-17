@@ -1,0 +1,10 @@
+p.date {
+  text-align: center
+}
+del {
+  color: #666;
+}
+div > pre {
+  margin-bottom: 0em !important;
+  margin-top: 0em !important;
+}
