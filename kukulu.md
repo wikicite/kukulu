@@ -103,6 +103,15 @@ L7-S1	# a sense
 L7-F4	# a form
 ~~~
 
+~~~ebnf
+IdNumber        ::=  [1-9] [0-9]*
+ItemId          ::=  'Q' IdNumber
+PropertyId      ::=  'P' IdNumber
+LexemeId        ::=  'L' IdNumber
+SenseId         ::=  LexemeId '-' 'S' IdNumber
+FormId          ::=  LexemeId '-' 'S' IdNumber
+~~~
+
 Entities can always be followed by an [annotation](#annotation).
 
 ## Value data types
@@ -142,7 +151,7 @@ Monolingual text (reserved word `Text`) can be expressed by a quoted string dire
 ~~~
 
 ~~~ebnf
-MonolingualText ::= QuotedString LanguageTag
+MonolingualText ::=  QuotedString LanguageTag
 ~~~
 
 The read-only attribute `value` gives the [string] value and the attribute `language` gives the [language tag]:
@@ -162,6 +171,10 @@ External identifiers (reserved word `Id`) are expressed as [strings]. To explici
 "12345" an Id
 ~~~
 
+~~~ebnf
+ExternalId      ::=  String
+~~~
+
 ### Mathematical expression
 
 Mathematical expressions (reserved word `Math`) are expressed as [strings]. To explicitly state that a mathematical expression is not a string use a condition on its type.
@@ -169,6 +182,10 @@ Mathematical expressions (reserved word `Math`) are expressed as [strings]. To e
 ~~~example
 "e^{i \pi} + 1 = 0" 
 "e = mc^2" a Math
+~~~
+
+~~~ebnf
+MathExpression  ::=  String
 ~~~
 
 ### URLs 
@@ -261,15 +278,14 @@ Values of data type `Quantity` are represented with its attributes `amount`, `lo
 Quantities can be expressed in abbreviated form:
 
 ~~~ebnf
-QuantityValue ::= Number Tolerance? Unit?
-Number        ::= [+-]? Decimal Exponent?
-Decimal       ::= [0-9]+ '.' [0-9]* | '.' [0-9]+
-Exponent      ::= [eE] [+-]? Integer
-Integer       ::= [0-9]+
-Tolerance     ::= '~' | '!' | PlusMinus Number | '[' Number ',' Number ']'
-PlusMinus     ::= '±' | '+/-' | '+-'
-Unit          ::= 'U' IdNumber  # TODO: also allow annotation
-IdNumber      ::= [1-9] [0-9]*
+QuantityValue   ::=  Number Tolerance? Unit?
+Number          ::=  Decimal Exponent?
+Decimal         ::=  [+-]? ( [0-9]+ '.' [0-9]* | '.' [0-9]+ )
+Exponent        ::=  [eE] Integer
+Integer         ::=  [+-]? [0-9]+
+Tolerance       ::=  '~' | '!' | PlusMinus Number | '[' Number ',' Number ']'
+PlusMinus       ::=  '±' | '+/-' | '+-'
+Unit            ::=  'U' IdNumber [ Annotation ]
 ~~~
 
 The tolerances `~` and `!` can be interpreted as following:
@@ -286,8 +302,17 @@ Values of data type geographic coordinate (reserved word `Coordinate`) are repre
 
 Quantities can be expressed in abbreviated form:
 
+~~~example
+Q3669835 P625 @043.26193/010.92708
+~~~
+
+~~~ebnf
+CoordinateValue ::= '@' Decimal '/' Decimal
+~~~
+
 :::TODO
-Not defined yet. Should support both decimal and degree-minute-second format. Can precision have arbitrary values?
+* Support precision (can it have arbitrary values?)
+* Also support degree-minute-second format and mixed forms
 :::
 
 [Q2]: http://www.wikidata.org/entity/Q2
@@ -314,9 +339,13 @@ L7:
 
 ...
 
-### Table
+### Media
 
-Values of data type tabular data (reserved word `Table`) ...
+Values of data type commons media (reserved word `Media`) ...
+
+### Tabular
+
+Values of data type tabular data (reserved word `Tabular`) ...
 
 ### Shape
 
@@ -334,7 +363,7 @@ Language codes are used at values of type [monolingual text] and for [annotation
 ~~~
 
 ~~~ebnf
-LanguageTag ::= '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*
+LanguageTag     ::=  '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*
 ~~~
 
 Additional constraints may apply.
@@ -802,6 +831,10 @@ If annotations are checked, the following should be equivalent:
 ?place"Shangri-La"@en
 ~~~
 
+~~~ebnf
+Annotation      ::=  QuotedString [ LanguageTag ]
+~~~
+
 # Background
 
 Kukulu has been influenced by:
@@ -814,6 +847,10 @@ Kukulu has been influenced by:
 * Perl 6 (Junctions)
 * Prolog/Datalog (deductive reasoning)
 * ...
+
+# Grammar
+
+Formal grammar is work in progress. EBNF rules from this document are collected in file [grammar.txt](grammar.txt).
 
 # References
 
