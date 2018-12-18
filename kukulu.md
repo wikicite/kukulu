@@ -1,7 +1,7 @@
 ---
 title: Kukulu
 subtitle: A data language for Wikibase
-date: 2018-12-17
+date: 2018-12-18
 ---
 
 ::: Warning
@@ -20,19 +20,19 @@ code and issue tracker.
 
 ## Motivation
 
-Existing methods to express Wikibase data such as JSON, RDF, and QuickStatements (see [existing data bindings]) are complex to read and write. This also applies to existing query languages and methods to express rules and constraints (see [existing query and rule languages]).
+Existing methods to express Wikibase data such as JSON and RDF can be complex to read and write (see [data bindings]). This also applies to query languages and methods to express rules and constraints (see [query and rule languages]).
 
-The goal of Kukulu is to provide a simple data language designed for the Wikibase [database model]. Its does *not* cover every possible aspect of existing languages but most typical use cases.
+The goal of Kukulu is to provide a simple data language designed for the Wikibase [database model]. It is inspired by QuickStatements format among other influences. The data language is not intended to replace all existing alternatives but to cover most typical use cases.
 
 ## Overview
 
 Features of the Kukulu data language can be divided into three levels that build upon each other:
 
-* A *[serialization language]*
+* A [serialization language]
 
-* A *[query language]*
+* A [query language]
 
-* A *[rule language]*
+* A [rule language]
 
 An feature possible on each level is the optionl support of [annotations].
 
@@ -62,7 +62,7 @@ A good starting point to learn about the Wikibase database model in practice is 
 [Help:Statements]: https://www.wikidata.org/wiki/Help:Statements
 [Help:Lexemes]: https://www.wikidata.org/wiki/Help:Lexemes
 
-## Existing data bindings
+## Data bindings
 
 Official serializations of the Wikibase database model exist [in JSON](https://www.mediawiki.org/wiki/Wikibase/DataModel/JSON) and [in RDF](https://www.mediawiki.org/wiki/Wikibase/DataModel/RDF). Data bindings in addition to the PHP sources are available as part of programming libraries at least in JavaScript ([wikidata-sdk]), Java ([Wikidata Toolkit]), Python ([Wikidata for Python]), and .NET ([Wiki Client Library]).
 
@@ -77,7 +77,7 @@ Serializations in addition to the official JSON and RDF syntax exist as part of 
 [Wikidata for Python]: https://pypi.org/project/Wikidata/
 [Wiki Client Library]: https://github.com/CXuesong/WikiClientLibrary
 
-## Existing query and rule languages
+## Query and rule languages
 
 * SPARQL (see [Wikidata query service])
 * [ShEX for Wikidata](https://www.wikidata.org/wiki/Wikidata:WikiProject_ShEx),
@@ -345,6 +345,41 @@ See <https://www.wikidata.org/wiki/Help:Monolingual_text_languages>,
 language codes such as `mis-x-Q36790` (*specified where?*).
 :::
 
+## Sets
+
+Sets can be defined by [set variables] and [set operators].
+
+::: example
+
+> extended type constraint on property P26: if A is spouse of B, then both must
+> be instance of human, fictional character, person, or mythical character
+
+    ?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
+
+	# equivalent with prefix set operators:
+
+    ?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
+
+:::
+
+## Ranges
+
+String, Time, and Quantity can be combined to ranges:
+
+    "a"..."z"
+    1901-01-01...2000-12-31
+    1...42  
+
+Indiviual values can be checked whether they are part of a range, for instance:
+
+    ?date in 1901-01-01...2000-12-31
+
+is equivalent to
+
+    ?date >= 1901-01-01
+    ?date <= 2000-12-13
+
+
 # Serialization
 [serialization language]: #serialization
 
@@ -526,6 +561,9 @@ Q41577083 P570:
     ?person !P463 ?organization     # preferred member-of (all statements)
     ?person *P463 ?organization     # member-of (all statements)
 
+## &&
+
+Can be used to merge lines.
 
 # Queries
 [query language]: #queries
@@ -691,7 +729,7 @@ The operator `a` or its alias `an` can be used as shortcut to test the [data typ
 
 ## Set operators
 
-Infix set operators:
+Infix [set](#set) operators:
 
 	... | ... | ...
 	... & ... & ...
@@ -726,13 +764,7 @@ Rules can also be written with keywords `if`, `then`, `else`, `unless`, `case`..
 
 See also [sets] for OR-clauses.
 
-## &&
-
-Can be used to merge lines.
-
-# Additional features
-
-## Annotations
+# Annotations
 
 An entity or variable can *directly* be followed by a string:
 
@@ -769,40 +801,6 @@ If annotations are checked, the following should be equivalent:
 
 ?place"Shangri-La"@en
 ~~~
-
-## Sets
-
-Sets can be defined by [set variables] and [set operators].
-
-::: example
-
-> extended type constraint on property P26: if A is spouse of B, then both must
-> be instance of human, fictional character, person, or mythical character
-
-    ?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
-
-	# equivalent with prefix set operators:
-
-    ?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
-
-:::
-
-### Ranges
-
-String, Time, and Quantity can be combined to ranges:
-
-    "a"..."z"
-    1901-01-01...2000-12-31
-    1...42  
-
-Indiviual values can be checked whether they are part of a range, for instance:
-
-    ?date in 1901-01-01...2000-12-31
-
-is equivalent to
-
-    ?date >= 1901-01-01
-    ?date <= 2000-12-13
 
 # Background
 
