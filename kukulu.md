@@ -40,10 +40,11 @@ An feature possible on each level is the optionl support of [annotations].
 
 The current draft of Kukulu does not fully support the following elements that might be considered part of the Wikibase database model. Support may be added sooner or later:
 
-* MediaWiki revision ids and timestamps
 * namespace ids
 * badges
 * claim identifiers
+* snaks-order
+* qualifiers-order
 * reference hashes
 
 The [query language] is more limited than SPARQL but easier for small queries. The [rule language] requires additional discussion.
@@ -89,18 +90,26 @@ Serializations in addition to the official JSON and RDF syntax exist as part of 
 # Data types
 [data type]: #data-types
 
-This section describes how to reference elements of the Wikibase database model in Kukulu syntax.
+Kukulu supports all Wikibase data types such as [entities], [strings], [coordinates]... and some [additional data types] for [language tags], [sets], and [ranges]. All data types are reserved words:
+
+~~~ebnf
+WBDataTypeName  ::=  'Item' | 'Property' | 'Lexeme' | 'Sense' | 'Form' |
+                     'String' | 'Text' | 'Math' | 'Time' | 'Id' | 'Url' |
+                     'Quantity' | 'Coordinate' | 'Shape' | 'Media' | 'Tabular'
+DataTypeName    ::=  WBDataType | 'Entity' | 'DataType' | 
+                     'Range' | 'Set' | 'Boolean'
+~~~
 
 ## Entities
 
-**Entities** (Items, Properties, Lexemes, Senses, and Forms) are referened by their plain ID:
+Instances of entity types ([Item], [Property], [Lexeme], [Sense], and [Form]) are referened by their plain ID:
 
 ~~~example
-Q42		# an item
-P31		# a property
-L7		# a lexeme
-L7-S1	# a sense
-L7-F4	# a form
+Q42		an  Item
+P31		a   Property
+L7		a   Lexeme
+L7-S1	a   Sense
+L7-F4	a   Form
 ~~~
 
 ~~~ebnf
@@ -112,27 +121,58 @@ SenseId         ::=  LexemeId '-' 'S' IdNumber
 FormId          ::=  LexemeId '-' 'S' IdNumber
 ~~~
 
-Entities can always be followed by an [annotation](#annotation).
+Entities can always be followed by an [annotation].
 
-## Value data types
+Entities have additional read-only attributes:
 
-All [**data types**](https://www.wikidata.org/wiki/Help:Data_type) are reserved words. Some of data type names differ from Wikibase ontology for abbreviation.
+* `id` gives the entity id as [String]
+* `uri` gives the entity URI
+* `bool` gives the [Boolean] value `True` if the entity exists and `False` otherwise
 
 ~~~example
-?entity    an  Item|Property|Lexeme|Sense|Form
-?text      a   String|Text
-?formular  a   Math
-?time      a   Time
-?coord     a   Coordinate	# = wikibase:GlobeCoordinate
-?shape     a   Shape		# = wikibase:GeoShape
-?amount    a   Quantity
-?id        an  Id			# = wikibase:ExternalId
-?url       an  Url
-?file      a   Media	    # = wikibase:CommonsMedia
-?data      a   Tabular		# = wikibase:TabularData
+Q42.id   === "Q42"
+Q42.uri  === <http://www.wikidata.org/entity/Q42>
+Q42.bool === True
+Q6.bool  === False  # does not exist in Wikidata
 ~~~
 
-### String
+### Item
+[items]: #item
+
+Items have attributes `labels`, `descriptions`, `aliases`, `claims`, and `sitelinks`. The read-only attributes `lastrevid` and `modified` give the internal revision id (as [Quantity]) and the timestamp of last modification (as [Time]). 
+
+### Property
+
+Properties habe same attributes like [items].
+
+### Lexeme
+[lexemes]: #lexeme
+
+Lexemes have attributes `lemmas`, `category`, `language`, `claims`, `senses`, and `forms`. The attribute `category` is equals to key `lexicalCategory` in the JSON [data binding](#data-bindings).
+
+~~~example
+L7:
+  lemmas:
+    en: cat
+  category: Q1084"substantive"
+  language: Q1860
+  ...
+  # TODO: exemplify senses and forms
+~~~
+
+...
+
+### Sense
+[senses]: #sense
+
+...
+
+### Form
+[forms]: #form
+
+...
+
+## String
 [strings]: #string
 
 Strings (reserved word `String`) can be expressed quoted by double quotes (`'...'`) or by simple quotes (`'...'`). Unquoted strings are possible following `: ` or `:=` if they start with a letter or digit and don't contain the character sequence ` #`.
@@ -141,7 +181,19 @@ Strings (reserved word `String`) can be expressed quoted by double quotes (`'...
 Define quoting and escaping rules (like JSON, like CSV and/or like QuickStatements, ...?)
 :::
 
-### Monolingual text
+~~~ebnf
+String          ::=  QuotedString | PlainString
+QuotedString    ::=  '"' ... '"' | "'" ... "'"
+~~~
+
+Casting to Url is done with the `str` attribute:
+
+~~~example
+Url(?str) === ?x.str
+~~~
+
+
+## Monolingual text
 
 Monolingual text (reserved word `Text`) can be expressed by a quoted string directly followed a [language tag].
 
@@ -162,7 +214,7 @@ The read-only attribute `value` gives the [string] value and the attribute `lang
 ?text.value == "xxx" && ?text.language == @und
 ~~~
 
-### External identifier
+## External identifier
 
 External identifiers (reserved word `Id`) are expressed as [strings]. To explicitly state that an identifier is not a string use a condition its type:
 
@@ -175,7 +227,7 @@ External identifiers (reserved word `Id`) are expressed as [strings]. To explici
 ExternalId      ::=  String
 ~~~
 
-### Mathematical expression
+## Mathematical expression
 
 Mathematical expressions (reserved word `Math`) are expressed as [strings]. To explicitly state that a mathematical expression is not a string use a condition on its type.
 
@@ -188,13 +240,14 @@ Mathematical expressions (reserved word `Math`) are expressed as [strings]. To e
 MathExpression  ::=  String
 ~~~
 
-### URLs 
+## URLs 
 
-Values of data type `URL` can be expressed as [strings] or unqoted URLs.
+Values of data type `Url` can be expressed as [strings] or unqoted URLs.
 
 ~~~example
 "https://www.wikidata.org/"
 https://www.wikidata.org/
+<https://www.wikidata.org/>
 //example.org
 ~~~
 
@@ -202,7 +255,18 @@ https://www.wikidata.org/
 Specifiy regular expression to detect unquoted URLs
 :::
 
-### Times
+~~~ebnf
+IRIRef          ::=  '<' ([^<>"{}|^`\]-[#x00-#x20])* '>'
+~~~
+
+Casting to Url is done with the `uri` attribute:
+
+~~~example
+Url(?x) === ?x.uri
+~~~
+
+
+## Times
 
 Values of data type `Time` are represented with its attributes `time`, `timezone`, `precision`, `before`, `after`, and `calendarmodel` (see Wikibase [database model] for details). The following example expresses the date `2001-12-31` with explicitly giving the default values for each optional attributes:
 
@@ -258,9 +322,9 @@ A simple year cannot be abbreviated as plain integer value except if explicitly 
 Add formal syntax
 :::
 
-### Quantity
+## Quantity
 
-Values of data type `Quantity` are represented with its attributes `amount`, `lowerBound`, `upperBound`, and `unit` (see Wikibase [database model] for details). The attributes `lowerBound` and `upperBound` are optional and have no default values. The attribute `unit` is optional with the special default value `1` and data type [item] otherwise.
+Values of data type `Quantity` (known as [Quantity](http://wikiba.se/ontology#Quantity) in the Wikibase ontology) are represented with its attributes `amount`, `lowerBound`, `upperBound`, and `unit` (see Wikibase [database model] for details). The attributes `lowerBound` and `upperBound` are optional and have no default values. The attribute `unit` is optional with the special default value `1` and data type [item] otherwise.
 
 ~~~{.example .yaml}
 - amount: 42            # 42
@@ -296,9 +360,10 @@ The tolerances `~` and `!` can be interpreted as following:
 42!   <=>  42±0
 ~~~
 
-### Coordinate
+## Coordinate
+[coordinates]: #coordinate
 
-Values of data type geographic coordinate (reserved word `Coordinate`) are represented with its attributes `latitude`, `longitude`, `precision`, and `globe`. (see Wikibase [database model] for details). The `globe` is a value of type [item] and set to [Q2] by default.
+Values of data type geographic coordinate (reserved word `Coordinate`, known as [GlobeCoordinate](http://wikiba.se/ontology#GlobeCoordinate) in the Wikibase ontology) are represented with its attributes `latitude`, `longitude`, `precision`, and `globe`. (see Wikibase [database model] for details). The `globe` is a value of type [item] and set to [Q2] by default.
 
 Quantities can be expressed in abbreviated form:
 
@@ -317,41 +382,23 @@ CoordinateValue ::= '@' Decimal '/' Decimal
 
 [Q2]: http://www.wikidata.org/entity/Q2
 
-### Lexeme
+## Media
 
-Lexemes have attributes `lemmas`, `category`, `language`, `claims`, `senses`, and `forms`.
+Values of data type commons media (reserved word `Media`, known as [CommonsMedia](http://wikiba.se/ontology#CommonsMedia) in the Wikibase ontology) ...
 
-~~~example
-L7:
-  lemmas:
-    en: cat
-  category: Q1084   # abbreviated from "lexicalCategory"
-  language: Q1860
-  ...
-  # TODO: exemplify senses and forms
-~~~
-
-### Sense
-
-...
-
-### Form
-
-...
-
-### Media
-
-Values of data type commons media (reserved word `Media`) ...
-
-### Tabular
+## Tabular
 
 Values of data type tabular data (reserved word `Tabular`) ...
 
-### Shape
+## Shape
 
-Values of data type geographic shape (reserved word `Shape`) ...
+Values of data type geographic shape (reserved word `Shape`, known as [GeoShape](http://wikiba.se/ontology#GeoShape) in the Wikibase ontology) ...
 
-## Language tags
+, known as [GeoShape](http://wikiba.se/ontology#GeoShape) in the Wikibase ontology) ...
+
+## Additional data types
+
+### Language tags
 [language tag]: #language-tags
 
 Language codes are used at values of type [monolingual text] and for [annotations].
@@ -374,7 +421,7 @@ See <https://www.wikidata.org/wiki/Help:Monolingual_text_languages>,
 language codes such as `mis-x-Q36790` (*specified where?*).
 :::
 
-## Sets
+### Sets
 
 Sets can be defined by [set variables] and [set operators].
 
@@ -391,9 +438,35 @@ Sets can be defined by [set variables] and [set operators].
 
 :::
 
-## Ranges
+### Boolean
 
-String, Time, and Quantity can be combined to ranges:
+The `Boolean` data type is returned for [boolean operators]. The reserved words `True` and `False` hold instances of this data type.
+
+~~~example
+?isItem := ?x.type === Item
+?isItem.type === Boolean
+
+True.type === Boolean
+~~~
+
+Casting to Boolean is done with the attribute `bool`:
+
+~~~example
+Boolean(?x) === ?x.bool
+~~~
+
+### DataType
+
+All [data type] keywords have data type `DataType`. The read-only attribute `uri` gives the URI of a data type in Wikibase ontology as [Url]. The read-only attribute `str` gives the keyword as [String].
+
+~~~example
+Shape.str     === "Shape"
+Shape.uri     === <http://wikiba.se/ontology#GeoShape>
+~~~
+
+### Ranges
+
+String, Time, and Quantity can be combined to ranges with the [range operator]:
 
     "a"..."z"
     1901-01-01...2000-12-31
@@ -414,6 +487,10 @@ is equivalent to
 
 
 Entities with their labels, aliases, claims etc. can be serialized in [key-value form], in [line-based form], and [mixed form].
+
+:::TODO
+Use refer to <https://docs.python.org/3.8/reference/lexical_analysis.html> and/or use definition there.
+:::
 
 ## Key-value form
 [Key-value form]: #key-value-form
@@ -583,11 +660,11 @@ Q41577083 P570:
 
 ## Ranks
 
-**Ranks** can be expressed with `!` (preferred rank), `~` (deprecated rank), and `*` (any rank) preprending a property:
+**Ranks** can be expressed with `^` (preferred rank), `~` (deprecated rank), and `*` (any rank) preprending a property:
 
     ?person P463 ?organization      # truthy member-of (default)
     ?person ~P463 ?organization     # deprecated member-of
-    ?person !P463 ?organization     # preferred member-of (all statements)
+    ?person ^P463 ?organization     # preferred member-of (all statements)
     ?person *P463 ?organization     # member-of (all statements)
 
 ## &&
@@ -687,9 +764,7 @@ data types. Wikibase schema language should also do **implicit type casting**
 
 * `?uri.length` instead of `strlen(str(?uri))` 
 
-Some data types can be converted to each other, e.g.
-
-* `Time("2018-12-31") == 2018-12-31`
+Some data types can be converted to each other by implicit or explicit [type casting].
 
 ## Assignments
 
@@ -727,24 +802,48 @@ Property path inspired by SPARQL are useful:
 
 # Operators
 
-## equality
+## boolean operators
+
+Normal equality operators make heavy use of [type coercion]. Strict equality operators require both operands to have exactely the same [data type].
 
     ==
     !=
 
-Equality operators make heavy use of type coercion.
+    ===
+    !==
+
+    !
+
+The unary prefix operator `!` casts to [Boolean]:
+
+~~~
+!?x === ?x.bool
+~~~
 
 ## comparision
+
+Values of comparable data types can be compared with:
 
     >
     >=
     <
     <=
 	
+Comparing non-comparable data types always returns `False`.
+
 ## regular expression
+
+To match a value against a regular expression:
 
 	=~
 	!~
+
+:::TODO
+Support (named) capturing groups (implicit assignment), e.g.
+
+    ?foo :=~ /(.+), (.+)/                    # assign ?1 and ?2
+    ?foo :=~ /(?<given>.+), (?<surname>.+)/  # assign ?given and ?surname
+:::
 
 ## a / an
 
@@ -756,6 +855,14 @@ The operator `a` or its alias `an` can be used as shortcut to test the [data typ
 ?id an Id|Url  <=>  ?id.type == Id|Url
 ~~~
 
+## Assignment 
+
+The assignment operator `:=` can be used to define [variables].
+
+~~~
+?douglas := Q42 
+~~~
+
 ## Set operators
 
 Infix [set](#set) operators:
@@ -764,7 +871,7 @@ Infix [set](#set) operators:
 	... & ... & ...
 	... in ...
 
-Prefix set operators:
+Prefix set operators `any` and `all`:
 
 	any( ... )
 	all( ... )
@@ -780,6 +887,28 @@ Prefix set operators:
 
 </div>
 
+## range operator
+
+The range operator `...` defines [ranges].
+
+~~~example
+2012-01...2013-07
+Q1...Q7
+?a...?b
+~~~
+
+Both parts of a range must have same [data type].
+
+## Type casting
+[type casting]: #type-casting
+[type coercion]: #type-casting
+
+All [data types] keywords can be used to convert between data types.
+
+~~~ebnf
+Time("2018-12-31") === 2018-12-31
+String(2018-12-31) === "2018-12-31"
+~~~
 
 ## rule operators
 
@@ -794,6 +923,7 @@ Rules can also be written with keywords `if`, `then`, `else`, `unless`, `case`..
 See also [sets] for OR-clauses.
 
 # Annotations
+[annotation]: #annotations
 
 An entity or variable can *directly* be followed by a string:
 
@@ -841,10 +971,11 @@ Kukulu has been influenced by:
 
 * QuickStatements
 * YAML
+* Python
 * SPARQL
 * N3
 * ShEX
-* Perl 6 (Junctions)
+* Perl (Junctions, Regex)
 * Prolog/Datalog (deductive reasoning)
 * ...
 
