@@ -1,0 +1,52 @@
+{
+  "name": "kukulu",
+  "description": "A data language for Wikibase",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "Jakob Voß",
+  "bin": {
+    "kukulu": "./bin/kukulu"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wikicite/kukulu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wikicite/kukulu/issues"
+  },
+  "scripts": {
+    "test": "mocha",
+    "lint": "eslint ./**/*.js ./bin/*",
+    "fix": "eslint --fix ./**/*.js ./bin/*",
+    "lint-staged": "lint-staged",
+    "diagram": "./bin/diagram"
+  },
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --fix",
+      "git add"
+    ],
+    "bin/*": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "pre-commit": [
+    "test",
+    "lint-staged"
+  ],
+  "dependencies": {
+    "chevrotain": "^4.1.1",
+    "commander": "^2.19.0",
+    "get-stdin": "^6.0.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.0",
+    "glob": "^7.1.3",
+    "lint-staged": "^7.3.0",
+    "mocha": "^5.2.0",
+    "pre-commit": "^1.2.2",
+    "should": "^13.2.3"
+  }
+}

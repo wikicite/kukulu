@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+const program = require("commander")
+const getStdin = require("get-stdin")
+const { tokenize, highlight, parse } = require("../lib/cli")
+
+program
+  .usage("[input...]")
+  .description("Parse and transform Kukulu Wikibase syntax")
+  .option("-t, --tokens", "tokenize input script")
+  .option("-a, --ast", "parse and emit abstract syntax tree")
+  .option("-i, --highlight", "syntax highlighting")
+  .parse(process.argv)
+
+var action = undefined
+var defaultAction = highlight
+
+if (program.tokens) action = tokenize
+else if (program.highlight) action = highlight
+else if (program.ast) action = parse
+
+const args = program.args
+const out = process.stdout
+
+if (!action && !args.length && process.stdin.isTTY) {
+  program.outputHelp()
+} else {
+  if (!action) action = defaultAction
+  if (args.length) {
+    action(args.join(" ")+"\n", out)
+  } else {
+    getStdin().then(input => action(input, out))
+  }
+}

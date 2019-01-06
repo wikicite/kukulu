@@ -1,0 +1,13 @@
+# plain entity identifier
+Q4115189
+P31
+
+# Simple statements
+Q4115189 P855 "https://www.wikidata.org/"
+Q4115189 P855 <https://www.wikidata.org/>
+
+# Statement with annotations
+@en # default language
+Q42'Douglas Adams'
+Q4115189 'Wikidata Sandbox' P31'instance of' Q16222597'Wikidata-Item'@de
+

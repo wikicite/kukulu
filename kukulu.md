@@ -1,7 +1,7 @@
 ---
 title: Kukulu
 subtitle: A data language for Wikibase
-date: 2018-12-18
+date: 2018-12-21
 ---
 
 ::: Warning
@@ -34,7 +34,7 @@ Features of the Kukulu data language can be divided into three levels that build
 
 * A [rule language]
 
-An feature possible on each level is the optionl support of [annotations].
+Additional features that can be used on each level include optional [annotations].
 
 ## Limitations
 
@@ -47,7 +47,7 @@ The current draft of Kukulu does not fully support the following elements that m
 * qualifiers-order
 * reference hashes
 
-The [query language] is more limited than SPARQL but easier for small queries. The [rule language] requires additional discussion.
+The [query language] is more limited than SPARQL but easier for small queries. The [rule language] is in a very early state of developlemt and it requires additional discussion.
 
 # Background
 
@@ -56,7 +56,7 @@ The [query language] is more limited than SPARQL but easier for small queries. T
 
 The **database model of Wikibase** (also referred to as *conceptual data model of Wikibase*) is [implemented canonically in PHP](https://github.com/wmde/WikibaseDataModel) and [described at MediaWiki.org](https://www.mediawiki.org/wiki/Wikibase/DataModel). The model is most visible through the Wikibase user interface. This specification assumes basic knowledge of the Wikibase database model and its terminology.
 
-A good starting point to learn about the Wikibase database model in practice is the [Wikidata introduction] and help pages such as [Help:Items], [Help:Statements], and [Help:Lexemes]. The best way to get familiar with data in Wikibase is contributing to Wikidata.
+A good starting point to learn about the Wikibase database model in practice is the [Wikidata introduction] and help pages such as [Help:Items], [Help:Statements], and [Help:Lexemes]. The best way to get familiar with data in Wikibase is regularly contributing to Wikidata.
 
 [Wikidata introduction]: https://www.wikidata.org/wiki/Wikidata:Introduction
 [Help:Items]: https://www.wikidata.org/wiki/Help:Items
@@ -90,14 +90,49 @@ Serializations in addition to the official JSON and RDF syntax exist as part of 
 # Data types
 [data type]: #data-types
 
-Kukulu supports all Wikibase data types such as [entities], [strings], [coordinates]... and some [additional data types] for [language tags], [sets], and [ranges]. All data types are reserved words:
+Kukulu supports all Wikibase data types including the WikibaseLexeme extension:
+
+* [entities]
+  * [Item] and [Property]
+  * [Lexeme], [Sense], and [Form]
+* [String]
+  * [Mathematical expression]
+  * [External Identifier]
+  * [Url]
+* [Monolingual text]
+* [Time]
+* [Quantity]
+* [Coordinate]
+* [Media]
+  * [Tabular]
+  * [Shape]
+
+All data types are reserved keywords:
 
 ~~~ebnf
-WBDataTypeName  ::=  'Item' | 'Property' | 'Lexeme' | 'Sense' | 'Form' |
+WikibaseDataType ::= 'Item' | 'Property' | 'Lexeme' | 'Sense' | 'Form' |
                      'String' | 'Text' | 'Math' | 'Time' | 'Id' | 'Url' |
                      'Quantity' | 'Coordinate' | 'Shape' | 'Media' | 'Tabular'
-DataTypeName    ::=  WBDataType | 'Entity' | 'DataType' | 
-                     'Range' | 'Set' | 'Boolean'
+~~~
+
+Additional data types are:
+
+* [Boolean]
+* [Set]
+* [Range]
+* [LanguageTag]
+* [LanguageSet]
+* [DataType]
+
+~~~ebnf
+KukuluDataType  ::=   'Boolean' | 'Set' | 'Range' | 'DataType'
+                      'LanguageTag' | 'LanguageSet'
+~~~
+
+The reserved keyword `Entity` is defined as [set] of the data types [Item], [Property], [Lexeme], [Sense], and [Form].
+
+~~~ebnf
+DataType         ::= WikibaseDataType | KukulDataType | 'Entity'
 ~~~
 
 ## Entities
@@ -118,7 +153,7 @@ ItemId          ::=  'Q' IdNumber
 PropertyId      ::=  'P' IdNumber
 LexemeId        ::=  'L' IdNumber
 SenseId         ::=  LexemeId '-' 'S' IdNumber
-FormId          ::=  LexemeId '-' 'S' IdNumber
+FormId          ::=  LexemeId '-' 'F' IdNumber
 ~~~
 
 Entities can always be followed by an [annotation].
@@ -126,7 +161,7 @@ Entities can always be followed by an [annotation].
 Entities have additional read-only attributes:
 
 * `id` gives the entity id as [String]
-* `uri` gives the entity URI
+* `uri` gives the entity URI as [Url]
 * `bool` gives the [Boolean] value `True` if the entity exists and `False` otherwise
 
 ~~~example
@@ -148,7 +183,7 @@ Properties habe same attributes like [items].
 ### Lexeme
 [lexemes]: #lexeme
 
-Lexemes have attributes `lemmas`, `category`, `language`, `claims`, `senses`, and `forms`. The attribute `category` is equals to key `lexicalCategory` in the JSON [data binding](#data-bindings).
+Lexemes have attributes `lemmas`, `category`, `language`, `claims`, `senses`, and `forms`. The attribute `category` equals to the lengthy key `lexicalCategory` in the JSON [data binding](#data-bindings).
 
 ~~~example
 L7:
@@ -175,18 +210,23 @@ L7:
 ## String
 [strings]: #string
 
-Strings (reserved word `String`) can be expressed quoted by double quotes (`'...'`) or by simple quotes (`'...'`). Unquoted strings are possible following `: ` or `:=` if they start with a letter or digit and don't contain the character sequence ` #`.
+Strings (reserved word `String`) can be expressed quoted by double quotes (`"..."`) or unquoted. Unquoted strings are possible following `: ` or `:=` if they start with a letter or digit and don't contain the character sequence ` #`.
 
-::: TODO
-Define quoting and escaping rules (like JSON, like CSV and/or like QuickStatements, ...?)
-:::
+Quoted strings use same escape rules like JSON grammar except escape sequences also include `\'`.
 
 ~~~ebnf
-String          ::=  QuotedString | PlainString
-QuotedString    ::=  '"' ... '"' | "'" ... "'"
+String           ::=  QuotedString | PlainString
+QuotedString     ::=  '"' (StringCharacter | EscapedCharacter)* '"'
+StringCharacter  ::=  [#x20-#x10ffff] - ["\]   # exclude U+22 (") and U+5C (\)
+EscapedCharacter ::=  '\' ( '"' | ''' | '\' | '/' | 'b' | 'n' | 'r' | 't' | 'u' Hex Hex Hex Hex )
+Hex              ::=  'u' [0-9A-Za-z] [0-9A-Za-z] [0-9A-Za-z] [0-9A-Za-z] 
 ~~~
 
-Casting to Url is done with the `str` attribute:
+A third type of strings is used for [annotations].
+
+The attribute `length` of a string gives its number of Unicode characters after NFCK normalization.
+
+Casting to String is done with the `str` attribute:
 
 ~~~example
 Url(?str) === ?x.str
@@ -240,7 +280,7 @@ Mathematical expressions (reserved word `Math`) are expressed as [strings]. To e
 MathExpression  ::=  String
 ~~~
 
-## URLs 
+## Url 
 
 Values of data type `Url` can be expressed as [strings] or unqoted URLs.
 
@@ -248,7 +288,7 @@ Values of data type `Url` can be expressed as [strings] or unqoted URLs.
 "https://www.wikidata.org/"
 https://www.wikidata.org/
 <https://www.wikidata.org/>
-//example.org
+http://example.org
 ~~~
 
 :::TODO
@@ -256,7 +296,9 @@ Specifiy regular expression to detect unquoted URLs
 :::
 
 ~~~ebnf
-IRIRef          ::=  '<' ([^<>"{}|^`\]-[#x00-#x20])* '>'
+URL             ::=  PlainURL | QuotedURL
+PlainURL        ::=  [a-z]+ '://' [^ \t<>"{}|^`\]+ 
+QuotedURL       ::=  '<' PlainURL '>'
 ~~~
 
 Casting to Url is done with the `uri` attribute:
@@ -266,7 +308,7 @@ Url(?x) === ?x.uri
 ~~~
 
 
-## Times
+## Time
 
 Values of data type `Time` are represented with its attributes `time`, `timezone`, `precision`, `before`, `after`, and `calendarmodel` (see Wikibase [database model] for details). The following example expresses the date `2001-12-31` with explicitly giving the default values for each optional attributes:
 
@@ -394,12 +436,79 @@ Values of data type tabular data (reserved word `Tabular`) ...
 
 Values of data type geographic shape (reserved word `Shape`, known as [GeoShape](http://wikiba.se/ontology#GeoShape) in the Wikibase ontology) ...
 
-, known as [GeoShape](http://wikiba.se/ontology#GeoShape) in the Wikibase ontology) ...
+*See also operator [in]*
 
 ## Additional data types
 
-### Language tags
-[language tag]: #language-tags
+### Boolean
+
+The `Boolean` data type is returned for [boolean operators]. The reserved words `True` and `False` hold instances of this data type.
+
+~~~example
+?isItem := ?x.type === Item
+?isItem.type === Boolean
+
+True.type === Boolean
+~~~
+
+Casting to Boolean is done with the attribute `bool`:
+
+~~~example
+Boolean(?x) === ?x.bool
+~~~
+
+### Set
+
+Sets can be defined by [set variables] and [set operators].
+
+::: example
+
+> extended type constraint on property P26: if A is spouse of B, then both must
+> be instance of human, fictional character, person, or mythical character
+
+    ?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
+
+	# equivalent with prefix set operators:
+
+    ?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
+
+:::
+
+The attribute `size` of a set gives the number of elements in a set as [Quantity]. The attribute name `length` can be used as alias for `size`.
+
+~~~example
+# works with more then 100 authors
+?work P50 ?*authors ; ?authors.size > 100
+
+# Entity := Item | Property | Lexeme | Sense | Form
+Entity.size === 5
+~~~
+
+See also operator [in].
+
+### Range
+
+String, Time, and Quantity can be combined to ranges with the [range operator]:
+
+    "a"..."z"
+    1901-01-01...2000-12-31
+    1...42  
+
+Indiviual values can be checked whether they are part of a range, for instance:
+
+    ?date in 1901-01-01...2000-12-31
+
+is equivalent to
+
+    ?date >= 1901-01-01
+    ?date <= 2000-12-13
+
+The attribute `upper` and `lower` give the upper and lower bound of a set, respectively.
+
+*See also operator [in]*
+
+### LanguageTag
+[language tag]: #languagetag
 
 Language codes are used at values of type [monolingual text] and for [annotations].
 
@@ -421,39 +530,22 @@ See <https://www.wikidata.org/wiki/Help:Monolingual_text_languages>,
 language codes such as `mis-x-Q36790` (*specified where?*).
 :::
 
-### Sets
 
-Sets can be defined by [set variables] and [set operators].
+### LanguageSet
+[language set]: #languageset
 
-::: example
+A language set is an infinite [set] of [language tag] values.
 
-> extended type constraint on property P26: if A is spouse of B, then both must
-> be instance of human, fictional character, person, or mythical character
-
-    ?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
-
-	# equivalent with prefix set operators:
-
-    ?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
-
-:::
-
-### Boolean
-
-The `Boolean` data type is returned for [boolean operators]. The reserved words `True` and `False` hold instances of this data type.
-
-~~~example
-?isItem := ?x.type === Item
-?isItem.type === Boolean
-
-True.type === Boolean
+~~~ebnf
+LanguageSet     ::=  LanguageTag '-'
 ~~~
 
-Casting to Boolean is done with the attribute `bool`:
-
 ~~~example
-Boolean(?x) === ?x.bool
+?en   := @en-     # @en | @en-US | @en-GB | ... 
+?misc := @mis-x-  # @mis-x-Q36790 | ...
 ~~~
+
+The `size` of a LanguageSet is not defined.
 
 ### DataType
 
@@ -464,33 +556,20 @@ Shape.str     === "Shape"
 Shape.uri     === <http://wikiba.se/ontology#GeoShape>
 ~~~
 
-### Ranges
 
-String, Time, and Quantity can be combined to ranges with the [range operator]:
+# Syntax
+[serialization language]: #syntax
 
-    "a"..."z"
-    1901-01-01...2000-12-31
-    1...42  
+A Kukulu script consists of a sequence of **sentences**.
 
-Indiviual values can be checked whether they are part of a range, for instance:
+~~~ebnf
+Script      ::= Sentence*
+~~~
 
-    ?date in 1901-01-01...2000-12-31
-
-is equivalent to
-
-    ?date >= 1901-01-01
-    ?date <= 2000-12-13
-
-
-# Serialization
-[serialization language]: #serialization
-
+A sentence is serialized in one logical line, optionally followed by in intended block. Logical lines, blank lines, indentation, and comments follow Python syntax (see [lexical analysis in Python](https://docs.python.org/3.8/reference/lexical_analysis.html])). In addition it is possible to join logical lines with the [semicolon operator].
 
 Entities with their labels, aliases, claims etc. can be serialized in [key-value form], in [line-based form], and [mixed form].
 
-:::TODO
-Use refer to <https://docs.python.org/3.8/reference/lexical_analysis.html> and/or use definition there.
-:::
 
 ## Key-value form
 [Key-value form]: #key-value-form
@@ -667,9 +746,14 @@ Q41577083 P570:
     ?person ^P463 ?organization     # preferred member-of (all statements)
     ?person *P463 ?organization     # member-of (all statements)
 
-## &&
+## ; {#semicolon}
+[semicolon operator]: #semicolon
 
-Can be used to merge lines.
+Can be used to merge logical lines. The logical line after semicolon has same intention level as the logical line before the operator.
+
+## ,
+
+Can be used to construct lists
 
 # Queries
 [query language]: #queries
@@ -739,7 +823,7 @@ SELECT ?human ?birth WHERE {
   ~P596 ?*birth			# and optionally its deprecated dates of birth
 ~~~
 
-See [sets] and [set operators] for extended usage of set variables.
+See [set] and [set operators] for extended usage of set variables.
 
 ## Attributes
 
@@ -855,6 +939,14 @@ The operator `a` or its alias `an` can be used as shortcut to test the [data typ
 ?id an Id|Url  <=>  ?id.type == Id|Url
 ~~~
 
+## in
+
+The operator `in` can be used to check whether 
+
+* an value is member of a [Set]
+* an value is inside a [Range]
+* a [coordinate] is inside a [Shape]
+
 ## Assignment 
 
 The assignment operator `:=` can be used to define [variables].
@@ -865,7 +957,7 @@ The assignment operator `:=` can be used to define [variables].
 
 ## Set operators
 
-Infix [set](#set) operators:
+Infix [set] operators:
 
 	... | ... | ...
 	... & ... & ...
@@ -889,7 +981,7 @@ Prefix set operators `any` and `all`:
 
 ## range operator
 
-The range operator `...` defines [ranges].
+The range operator `...` defines a [range].
 
 ~~~example
 2012-01...2013-07
@@ -925,12 +1017,12 @@ See also [sets] for OR-clauses.
 # Annotations
 [annotation]: #annotations
 
-An entity or variable can *directly* be followed by a string:
+An entity or variable can be followed by a single-quoted string:
 
 ~~~example
 ?person:
-  P31"instance of" Q5"human"
-  P569"date of birth" ?date
+  P31'instance of' Q5'human'
+  P569'date of birth' ?date
 ~~~
 
 Applications can choose to ignore annotations, translate annotations, and/or check whether annotations match entity labels/lemmas.
@@ -939,8 +1031,8 @@ Annotations can have languages:
 
 ~~~example
 ?person:
-  P31"είναι"@gr Q5"Mensch"@de
-  P569"date of birth" ?date
+  P31'είναι'@gr Q5'Mensch'@de
+  P569'date of birth' ?date
 ~~~
 
 The default annotation language can be set by a language tag, prepended with `@` on its own line:
@@ -948,21 +1040,22 @@ The default annotation language can be set by a language tag, prepended with `@`
 ~~~example
 @gr
 ?person:
-  P31"είναι" Q5"άνθρωπος"
+  P31'είναι' Q5'άνθρωπος'
   @en
-  P569"date of birth" ?date
+  P569'date of birth' ?date
 ~~~
 
 If annotations are checked, the following should be equivalent:
 
 ~~~example
-?place Len "Shangri-La"
+?place Len 'Shangri-La'
 
-?place"Shangri-La"@en
+?place'Shangri-La'@en
 ~~~
 
 ~~~ebnf
-Annotation      ::=  QuotedString [ LanguageTag ]
+AnnotationString ::=  "'" (StringCharacter | EscapedCharacter)* "'"
+Annotation       ::=  AnnotationString [ LanguageTag ]
 ~~~
 
 # Background
@@ -982,6 +1075,13 @@ Kukulu has been influenced by:
 # Grammar
 
 Formal grammar is work in progress. EBNF rules from this document are collected in file [grammar.txt](grammar.txt).
+
+~~~ebnf
+Script          ::=  ( Sentence )*
+...
+~~~
+
+Unicode codepoints below U+20 are forbidden.
 
 # References
 

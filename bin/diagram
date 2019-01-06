@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+const fs = require("fs")
+const chevrotain = require("chevrotain")
+
+const Parser = require("../lib/parser")
+const parserInstance = new Parser([])
+
+const serializedGrammar = parserInstance.getSerializedGastProductions()
+
+const htmlText = chevrotain.createSyntaxDiagramsCode(serializedGrammar)
+
+fs.writeFileSync("grammar.html", htmlText)
