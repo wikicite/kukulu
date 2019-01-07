@@ -8,3 +8,6 @@ div > pre {
   margin-bottom: 0em !important;
   margin-top: 0em !important;
 }
+div.railroad {
+  background-color: hsl(30, 20%, 95%)
+}

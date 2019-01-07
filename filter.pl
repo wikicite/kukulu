@@ -23,4 +23,10 @@ pandoc_filter 'CodeBlock.example' => sub {
         Div attributes { class => 'Warning' },
         [ Plain [ Strong [ Str "TODO" ] ], @{ $_->content } ]
     ];
+  },
+  'div.syntax-diagram' => sub {
+    my $html = do { local ( @ARGV, $/ ) = 'grammar.html'; <> };
+
+    $html =~ s!.*?</style>!!ms;
+    [ Div attributes { class => 'railroad' }, [ RawBlock 'html', $html ] ];
   };

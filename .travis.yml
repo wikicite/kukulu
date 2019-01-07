@@ -1,14 +1,14 @@
 language: node_js
-node_js:
-  - "10"
-  - "8"
-  - "6"
 
 jobs:
   include:
       
     # test node module
     - script: npm test
+      node_js:
+        - "10"
+        - "8"
+        - "6"
     
     # compile documents  
     - stage: docs
@@ -25,7 +25,6 @@ jobs:
 
         # create documents
         - make
-        - npm run diagram
         - mv kukulu.html index.html
 
       deploy:

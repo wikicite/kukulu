@@ -1,9 +1,14 @@
 HTML_OPTIONS=--css style.css --toc -F filter.pl --template=GitHub.html5
 WIKI_OPTIONS=
 
-default: kukulu.html kukulu.txt grammar.txt
+.PHONY: grammar.html
 
-kukulu.html: kukulu.md
+default: grammar.html kukulu.html kukulu.txt grammar.txt
+
+grammar.html:
+	npm run diagram
+
+kukulu.html: kukulu.md grammar.html
 	pandoc -s $(HTML_OPTIONS) $< -o $@
 
 kukulu.txt: kukulu.md

@@ -6,8 +6,11 @@ date: 2018-12-21
 
 ::: Warning
 This document contains no official, established, or final specification but
-a request for comments. See <https://github.com/wikicite/kukulu> for source
-code and issue tracker.
+a request for comments. See
+
+* <https://github.com/wikicite/kukulu> for source code and issue tracker
+* [syntax diagram] for a preliminary formal grammar
+
 :::
 
 # Introduction
@@ -746,14 +749,7 @@ Q41577083 P570:
     ?person ^P463 ?organization     # preferred member-of (all statements)
     ?person *P463 ?organization     # member-of (all statements)
 
-## ; {#semicolon}
-[semicolon operator]: #semicolon
-
-Can be used to merge logical lines. The logical line after semicolon has same intention level as the logical line before the operator.
-
-## ,
-
-Can be used to construct lists
+Note that predicates of qualifiers and references cannot have ranks.
 
 # Queries
 [query language]: #queries
@@ -885,6 +881,16 @@ Property path inspired by SPARQL are useful:
     ?item P31|P279 ?   # an item that is an instance or subclass of something
 
 # Operators
+
+### ; {#semicolon}
+[semicolon operator]: #semicolon
+
+Can be used to merge logical lines. The logical line after semicolon has same intention level as the logical line before the operator.
+
+### ,
+
+Can be used to construct lists
+
 
 ## boolean operators
 
@@ -1082,6 +1088,12 @@ Script          ::=  ( Sentence )*
 ~~~
 
 Unicode codepoints below U+20 are forbidden.
+
+## Syntax diagram
+
+Grammar rules from the current (incomplete!) parser implementation:
+
+<div class="syntax-diagram"></div>
 
 # References
 
