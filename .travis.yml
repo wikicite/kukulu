@@ -1,12 +1,36 @@
-language: r
-pandoc_version: 2.2.1
-install:
- - curl -L https://cpanmin.us | sudo perl - --sudo App::cpanminus
- - sudo cpanm Pandoc::Elements
-script:
- - make
- - cp kukulu.html index.html
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
+language: node_js
+node_js:
+  - "10"
+  - "8"
+  - "6"
+
+jobs:
+  include:
+      
+    # test node module
+    - script: npm test
+    
+    # compile documents  
+    - stage: docs
+      node_js: "6"
+      script:
+          
+        # install Pandoc
+        - curl -fLo /tmp/pandoc-2.2.1-1-amd64.deb https://github.com/jgm/pandoc/releases/download/2.2.1/pandoc-2.2.1-1-amd64.deb
+        - sudo dpkg -i /tmp/pandoc-2.2.1-1-amd64.deb
+
+        # install Pandoc::Elements
+        - curl -L https://cpanmin.us | sudo perl - --sudo App::cpanminus
+        - sudo cpanm --notest Pandoc::Elements
+
+        # create documents
+        - make
+        - npm run diagram
+        - mv kukulu.html index.html
+
+      deploy:
+        on:
+          branch: master
+        provider: pages
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN
