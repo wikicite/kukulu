@@ -1,0 +1,10 @@
+# fixme: Detend missing
+#Q42:
+#  labels:
+#    en: "Douglas Adams"
+#    fr: ?
+#  P31: Q5
+
+# mixed mode
+Q42 P31:
+  value: Q5

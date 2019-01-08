@@ -27,7 +27,8 @@ describe("parser", () => {
       let tokens = Lexer.tokenize(input)
       should(tokens.errors).be.empty()
       parser.input = tokens.tokens
-      should(parser.Script()).not.be.ok()
+      parser.Script()
+      should(parser.errors).not.be.empty()
     })
   })
 

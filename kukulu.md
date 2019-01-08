@@ -15,7 +15,7 @@ a request for comments. See
 
 # Introduction
 
-**Kukulu** (named after the Hawaiian word *kūkulu*: to build, construct) is a formal language to express, query, and model data in the database model of [Wikibase]. Wikibase is primarily known for the knowledge base [Wikidata]. Its [database model] has official serializations in JSON and in RDF. Kukulu defines an alternative [serialization] with extensions to express [queries] and [rules].
+**Kukulu** (named after the Hawaiian word *kūkulu*: to build, construct) is a formal language to express, query, and model data in the database model of [Wikibase]. Wikibase is primarily known for the knowledge base [Wikidata]. Its [database model] has official serializations in JSON and in RDF. Kukulu defines an [alternative syntax](#syntax) with extensions to express [queries] and [rules].
 
 [Wikibase]: https://wikiba.se/
 [Wikidata]: https://www.wikidata.org/
@@ -68,13 +68,13 @@ A good starting point to learn about the Wikibase database model in practice is 
 
 ## Data bindings
 
-Official serializations of the Wikibase database model exist [in JSON](https://www.mediawiki.org/wiki/Wikibase/DataModel/JSON) and [in RDF](https://www.mediawiki.org/wiki/Wikibase/DataModel/RDF). Data bindings in addition to the PHP sources are available as part of programming libraries at least in JavaScript ([wikidata-sdk]), Java ([Wikidata Toolkit]), Python ([Wikidata for Python]), and .NET ([Wiki Client Library]).
-
-Serializations in addition to the official JSON and RDF syntax exist as part of the tools [QuickStatements], [GraphQL API], and [wikidata-cli].
+Official serializations of the Wikibase database model exist [in JSON](https://www.mediawiki.org/wiki/Wikibase/DataModel/JSON) and [in RDF](https://www.mediawiki.org/wiki/Wikibase/DataModel/RDF). Additional serializations exist as part of the tools [QuickStatements], [GraphQL API], and [wikidata-cli].
+Data bindings in addition to the PHP sources of Wikibase are available as part of programming libraries at least in Lua ([MediaWiki Wikibase Client]), JavaScript ([wikidata-sdk]), Java ([Wikidata Toolkit]), Python ([Wikidata for Python]), and .NET ([Wiki Client Library]).
 
 [QuickStatements]: https://www.wikidata.org/wiki/Help:QuickStatements
 [GraphQL API]: https://tools.wmflabs.org/tptools/wdql.html
 
+[MediaWiki Wikibase Client]: https://www.mediawiki.org/wiki/Extension:Wikibase_Client/Lua
 [wikidata-sdk]: https://www.npmjs.com/package/wikidata-sdk
 [wikidata-cli]: https://www.npmjs.com/package/wikidata-cli
 [Wikidata Toolkit]: https://www.mediawiki.org/wiki/Wikidata_Toolkit
@@ -82,6 +82,8 @@ Serializations in addition to the official JSON and RDF syntax exist as part of 
 [Wiki Client Library]: https://github.com/CXuesong/WikiClientLibrary
 
 ## Query and rule languages
+
+*This section needs to be extended*
 
 * SPARQL (see [Wikidata query service])
 * [ShEX for Wikidata](https://www.wikidata.org/wiki/Wikidata:WikiProject_ShEx),
@@ -95,7 +97,7 @@ Serializations in addition to the official JSON and RDF syntax exist as part of 
 
 Kukulu supports all Wikibase data types including the WikibaseLexeme extension:
 
-* [entities]
+* [Entities]
   * [Item] and [Property]
   * [Lexeme], [Sense], and [Form]
 * [String]
@@ -118,9 +120,9 @@ WikibaseDataType ::= 'Item' | 'Property' | 'Lexeme' | 'Sense' | 'Form' |
                      'Quantity' | 'Coordinate' | 'Shape' | 'Media' | 'Tabular'
 ~~~
 
-Additional data types are:
+Kukulu defines additional data types:
 
-* [Boolean]
+* [Bool]
 * [Set]
 * [Range]
 * [LanguageTag]
@@ -128,14 +130,8 @@ Additional data types are:
 * [DataType]
 
 ~~~ebnf
-KukuluDataType  ::=   'Boolean' | 'Set' | 'Range' | 'DataType'
+KukuluDataType  ::=   'Bool' | 'Set' | 'Range' | 'DataType'
                       'LanguageTag' | 'LanguageSet'
-~~~
-
-The reserved keyword `Entity` is defined as [set] of the data types [Item], [Property], [Lexeme], [Sense], and [Form].
-
-~~~ebnf
-DataType         ::= WikibaseDataType | KukulDataType | 'Entity'
 ~~~
 
 ## Entities
@@ -165,7 +161,7 @@ Entities have additional read-only attributes:
 
 * `id` gives the entity id as [String]
 * `uri` gives the entity URI as [Url]
-* `bool` gives the [Boolean] value `True` if the entity exists and `False` otherwise
+* `bool` gives the [Bool] value `True` if the entity exists and `False` otherwise
 
 ~~~example
 Q42.id   === "Q42"
@@ -294,13 +290,10 @@ https://www.wikidata.org/
 http://example.org
 ~~~
 
-:::TODO
-Specifiy regular expression to detect unquoted URLs
-:::
 
 ~~~ebnf
 URL             ::=  PlainURL | QuotedURL
-PlainURL        ::=  [a-z]+ '://' [^ \t<>"{}|^`\]+ 
+PlainURL        ::=  [a-z]+ '://' [^\s<>"{}|^`\]+ 
 QuotedURL       ::=  '<' PlainURL '>'
 ~~~
 
@@ -387,9 +380,10 @@ Values of data type `Quantity` (known as [Quantity](http://wikiba.se/ontology#Qu
 Quantities can be expressed in abbreviated form:
 
 ~~~ebnf
-QuantityValue   ::=  Number Tolerance? Unit?
+Quantity        ::=  QuantityValue Unit?
+QuantityValue   ::=  Number Tolerance?
 Number          ::=  Decimal Exponent?
-Decimal         ::=  [+-]? ( [0-9]+ '.' [0-9]* | '.' [0-9]+ )
+Decimal         ::=  [+-]? ( [0-9]+ | [0-9]* '.' [0-9]+ )
 Exponent        ::=  [eE] Integer
 Integer         ::=  [+-]? [0-9]+
 Tolerance       ::=  '~' | '!' | PlusMinus Number | '[' Number ',' Number ']'
@@ -403,6 +397,12 @@ The tolerances `~` and `!` can be interpreted as following:
 42~   <=>  42+-0.5
 0.1~  <=>  0.1±0.05
 42!   <=>  42±0
+~~~
+
+Note that every number in Kukulu is a Quantity:
+
+~~~example
+?string.length  in  12+-2   # length is 10 to 14
 ~~~
 
 ## Coordinate
@@ -443,21 +443,21 @@ Values of data type geographic shape (reserved word `Shape`, known as [GeoShape]
 
 ## Additional data types
 
-### Boolean
+### Bool
 
-The `Boolean` data type is returned for [boolean operators]. The reserved words `True` and `False` hold instances of this data type.
+The `Bool` data type is returned for [boolean operators]. The reserved words `True` and `False` hold predefined [instances] of this data type.
 
 ~~~example
 ?isItem := ?x.type === Item
-?isItem.type === Boolean
+?isItem.type === Bool
 
-True.type === Boolean
+True.type === Bool
 ~~~
 
-Casting to Boolean is done with the attribute `bool`:
+Casting to Bool is done with the attribute `bool`:
 
 ~~~example
-Boolean(?x) === ?x.bool
+Bool(?x) === ?x.bool
 ~~~
 
 ### Set
@@ -477,17 +477,19 @@ Sets can be defined by [set variables] and [set operators].
 
 :::
 
-The attribute `size` of a set gives the number of elements in a set as [Quantity]. The attribute name `length` can be used as alias for `size`.
+The attribute `length` of a set gives the number of elements in a set as [Quantity].
 
 ~~~example
 # works with more then 100 authors
-?work P50 ?*authors ; ?authors.size > 100
+?work P50 ?*authors ; ?authors.length > 100
 
 # Entity := Item | Property | Lexeme | Sense | Form
-Entity.size === 5
+Entity.length === 5
 ~~~
 
 See also operator [in].
+
+The reserved keyword [`Empty`](#empty) denotes the empty set.
 
 ### Range
 
@@ -559,14 +561,40 @@ Shape.str     === "Shape"
 Shape.uri     === <http://wikiba.se/ontology#GeoShape>
 ~~~
 
+## Instances
+
+Kukulu defines some reserved keywords for predefined  expressions.
+
+### True and False
+
+The keyword `True` and `False` are defined as instances of data type [Bool].
+
+### Entity
+
+The keyword `Entity` is defined as [Set] of the data types [Item], [Property], [Lexeme], [Sense], and [Form].
+
+~~~example
+Entity === Item | Property | Lexeme | Sense | Form
+~~~
+
+### Empty
+
+The keyword `Empty` ist defined as the empty [Set].
+
+~~~example
+Empty.length === 0
+~~~
 
 # Syntax
 [serialization language]: #syntax
+[serialization]: #syntax
 
-A Kukulu script consists of a sequence of **sentences**.
+*See [grammar] for additional syntax rules*
+
+A Kukulu script consists of a newline-separated sequence of **sentences**.
 
 ~~~ebnf
-Script      ::= Sentence*
+Script      ::= Sentence? ( EOL Sentence? )*
 ~~~
 
 A sentence is serialized in one logical line, optionally followed by in intended block. Logical lines, blank lines, indentation, and comments follow Python syntax (see [lexical analysis in Python](https://docs.python.org/3.8/reference/lexical_analysis.html])). In addition it is possible to join logical lines with the [semicolon operator].
@@ -744,12 +772,31 @@ Q41577083 P570:
 
 **Ranks** can be expressed with `^` (preferred rank), `~` (deprecated rank), and `*` (any rank) preprending a property:
 
-    ?person P463 ?organization      # truthy member-of (default)
-    ?person ~P463 ?organization     # deprecated member-of
-    ?person ^P463 ?organization     # preferred member-of (all statements)
-    ?person *P463 ?organization     # member-of (all statements)
+~~~example
+?person P463 ?organization      # truthy member-of (default)
+?person ~P463 ?organization     # deprecated member-of
+?person ^P463 ?organization     # preferred member-of (all statements)
+?person *P463 ?organization     # member-of (all statements)
+~~~
 
 Note that predicates of qualifiers and references cannot have ranks.
+
+## Attributes
+
+An **attribute** can be referenced inline prepended by a dot or intended followed by a colon. The attribute name must start with a lowercase letter, optionally followed by lowercase and uppercase letters:
+
+~~~example
+Q42.id == "Q42"
+
+Q42:
+  id: Q42
+~~~
+
+~~~ebnf
+AttributeName   ::= [a-z] [a-zA-Z]
+~~~
+
+The names `novalue` and `somevalue` are forbidden as attribute names.
 
 # Queries
 [query language]: #queries
@@ -802,7 +849,6 @@ SELECT ?human ?birth WHERE {
 ~~~
 :::
 
-
 ### Set variables
 
 **Set variables** are bound to multiple values at one. A set variable is referenced with a question mark followed by plus or asterisk:
@@ -853,6 +899,8 @@ Some data types can be converted to each other by implicit or explicit [type cas
 
 This corresponds to `BIND` in SPARQL.
 
+Variables can only be assigned once.
+
 ## Statements
 
 Simple statements can be expressed in QuickStatements syntax extended by variables:
@@ -866,6 +914,21 @@ Property path inspired by SPARQL are useful:
 
     ?work P50 ? =>                  # if item has an author 
         ?work P31/P279* Q17537576   # then it must be subclass of creative work
+
+## Query evaluation
+
+Queries can be evaluated against a Wikibase instance.
+
+~~~
+> Q7    # does not exist in Wikidata
+Empty
+> Q42 an Item
+True
+> Q42.labels.en
+"Douglas Adams"
+> Q42 P31 Q5
+True
+~~~
 
 # Rules
 [rule language]: #rules
@@ -904,12 +967,6 @@ Normal equality operators make heavy use of [type coercion]. Strict equality ope
 
     !
 
-The unary prefix operator `!` casts to [Boolean]:
-
-~~~
-!?x === ?x.bool
-~~~
-
 ## comparision
 
 Values of comparable data types can be compared with:
@@ -931,8 +988,8 @@ To match a value against a regular expression:
 :::TODO
 Support (named) capturing groups (implicit assignment), e.g.
 
-    ?foo :=~ /(.+), (.+)/                    # assign ?1 and ?2
-    ?foo :=~ /(?<given>.+), (?<surname>.+)/  # assign ?given and ?surname
+    ?foo :=~ "(.+), (.+)"                    # assign ?1 and ?2
+    ?foo :=~ "(?<given>.+), (?<surname>.+)"  # assign ?given and ?surname
 :::
 
 ## a / an
@@ -1083,7 +1140,7 @@ Kukulu has been influenced by:
 Formal grammar is work in progress. EBNF rules from this document are collected in file [grammar.txt](grammar.txt).
 
 ~~~ebnf
-Script          ::=  ( Sentence )*
+Script          ::=  ( Expression )*
 ...
 ~~~
 

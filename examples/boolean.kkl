@@ -1,0 +1,20 @@
+# True and False
+True
+False
+
+# Negation
+!?x
+!!?x
+!Q1.label.en
+!!Q1.label.en
+
+# comparison
+Q1 == ?x
+?x.length >= ?x.length
+Q1.label.en != Q2.label.en
+Q1.label.en =~ "foo"
+
+!Q1 === False
+!!Q1.id !== False
+
+0 < 1 ; 1 > 0 ; 0 <= 1 ; 1 >= 0

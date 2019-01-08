@@ -12,12 +12,12 @@ const examples = {
   "Q1 # comment\n# comment\nQ2": ["ItemId", "EOL", "EOL", "ItemId"],
 
   // ignore blank lines and comments in between
-  "Q1\n # comment\n\nQ2": ["ItemId", "EOL", "EOL", "ItemId"],
+  "Q1\n # comment\n\nQ2": ["ItemId", "EOL", "EOL", "EOL", "ItemId"],
 
   "Q1\n  P2 Q3": [
     "ItemId", "EOL", 
     "Indent", "PropertyId", "ItemId", "EOL",
-    "Dedent"
+    "Dedent",
   ],
 
   // Semicolon
@@ -25,7 +25,7 @@ const examples = {
   "Q1:\n  P1;P2": [
     "ItemId", "Colon", "EOL",
     "Indent", "PropertyId", "EOL", "PropertyId", "EOL",
-    "Dedent"
+    "Dedent",
   ],
 }
 
@@ -39,8 +39,6 @@ describe("lexer", () => {
     for(let input in examples) {
       let result = tokenize(input)
       let tokenNames = result.tokens.map(t => t.tokenType.tokenName)
-      let expect = examples[input]
-      if (expect[expect.length-1] !== "Dedent") expect.push("EOL")
       should(tokenNames).deepEqual(examples[input])
     }
   })
