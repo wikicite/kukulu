@@ -294,13 +294,10 @@ https://www.wikidata.org/
 http://example.org
 ~~~
 
-:::TODO
-Specifiy regular expression to detect unquoted URLs
-:::
 
 ~~~ebnf
 URL             ::=  PlainURL | QuotedURL
-PlainURL        ::=  [a-z]+ '://' [^ \t<>"{}|^`\]+ 
+PlainURL        ::=  [a-z]+ '://' [^\s<>"{}|^`\]+ 
 QuotedURL       ::=  '<' PlainURL '>'
 ~~~
 
@@ -563,6 +560,8 @@ Shape.uri     === <http://wikiba.se/ontology#GeoShape>
 # Syntax
 [serialization language]: #syntax
 
+*See [grammar] for additional syntax rules*
+
 A Kukulu script consists of a sequence of **sentences**.
 
 ~~~ebnf
@@ -744,12 +743,31 @@ Q41577083 P570:
 
 **Ranks** can be expressed with `^` (preferred rank), `~` (deprecated rank), and `*` (any rank) preprending a property:
 
-    ?person P463 ?organization      # truthy member-of (default)
-    ?person ~P463 ?organization     # deprecated member-of
-    ?person ^P463 ?organization     # preferred member-of (all statements)
-    ?person *P463 ?organization     # member-of (all statements)
+~~~example
+?person P463 ?organization      # truthy member-of (default)
+?person ~P463 ?organization     # deprecated member-of
+?person ^P463 ?organization     # preferred member-of (all statements)
+?person *P463 ?organization     # member-of (all statements)
+~~~
 
 Note that predicates of qualifiers and references cannot have ranks.
+
+## Attributes
+
+An **attribute** can be referenced inline prepended by a dot or intended followed by a colon. The attribute name must start with a lowercase letter, optionally followed by lowercase and uppercase letters:
+
+~~~example
+Q42.id == "Q42"
+
+Q42:
+  id: Q42
+~~~
+
+~~~ebnf
+AttributeName   ::= [a-z] [a-zA-Z]
+~~~
+
+The names `novalue` and `somevalue` are forbidden as attribute names.
 
 # Queries
 [query language]: #queries
