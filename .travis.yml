@@ -24,12 +24,13 @@ jobs:
         - sudo cpanm --notest Pandoc::Elements
 
         # create documents
-        - make
-        - mv kukulu.html index.html
+        - mkdir -p dist/mode
+        - npm run spec
 
       deploy:
         on:
           branch: master
         provider: pages
+        local-dir: dist
         skip-cleanup: true
         github-token: $GITHUB_TOKEN

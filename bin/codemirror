@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+
+// Updates CodeMirror mode file
+
+const path = require("path")
+const fs = require("fs")
+const { tokens } = require("../lib/lexer")
+const { createCodemirrorModeCode } = require("../lib/codemirror")
+
+const jsCode = createCodemirrorModeCode("kukulu", tokens)
+
+const dir = path.resolve(__dirname, "../dist/mode")
+
+// mkdir -p (only available since node 10.12.0)
+const mkdir = p => p && !fs.existsSync(p) ? fs.mkdirSync(p) : null
+const paths = dir.split("/")
+paths.reduce((path, cur) => { mkdir(path); return `${path}/${cur}` })
+mkdir(dir)
+
+fs.writeFileSync(dir + "/kukulu.js", jsCode)

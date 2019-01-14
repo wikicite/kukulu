@@ -1,9 +1,3 @@
----
-title: Kukulu
-subtitle: A data language for Wikibase
-date: 2018-12-21
----
-
 ::: Warning
 This document contains no official, established, or final specification but
 a request for comments. See
@@ -188,7 +182,7 @@ Lexemes have attributes `lemmas`, `category`, `language`, `claims`, `senses`, an
 L7:
   lemmas:
     en: cat
-  category: Q1084"substantive"
+  category: Q1084'substantive'
   language: Q1860
   ...
   # TODO: exemplify senses and forms
@@ -351,7 +345,7 @@ If days and month are omitted or set to zero, the default precision is changed t
 
 A simple year cannot be abbreviated as plain integer value except if explicitly given as value of attribute `time`:
 
-~~~
+~~~example
 - time: 2013  # value of type Time with time set to +2013-00-00T00:00::Z and precision 9
 - 2013        # value of type Quantity
 ~~~
@@ -364,7 +358,7 @@ Add formal syntax
 
 Values of data type `Quantity` (known as [Quantity](http://wikiba.se/ontology#Quantity) in the Wikibase ontology) are represented with its attributes `amount`, `lowerBound`, `upperBound`, and `unit` (see Wikibase [database model] for details). The attributes `lowerBound` and `upperBound` are optional and have no default values. The attribute `unit` is optional with the special default value `1` and data type [item] otherwise.
 
-~~~{.example .yaml}
+~~~example
 - amount: 42            # 42
   unit: 1
 - amount: 42            # 42±0 (distinct from 42)
@@ -464,18 +458,16 @@ Bool(?x) === ?x.bool
 
 Sets can be defined by [set variables] and [set operators].
 
-::: example
+~~~example
+# extended type constraint on property P26: if A is spouse of B, then both must
+# be instance of human, fictional character, person, or mythical character
 
-> extended type constraint on property P26: if A is spouse of B, then both must
-> be instance of human, fictional character, person, or mythical character
+?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
 
-    ?A P26 ?B  =>  ?A & ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
+# equivalent with prefix set operators:
 
-	# equivalent with prefix set operators:
-
-    ?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
-
-:::
+?A P26 ?B => all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)
+~~~
 
 The attribute `length` of a set gives the number of elements in a set as [Quantity].
 
@@ -608,7 +600,7 @@ Entities with their labels, aliases, claims etc. can be serialized in [key-value
 
 The **key-value form** is inspired by [YAML] (but differs in several ways).
 
-~~~{.example .yaml}
+~~~example
 # entity identifier as root key
 Q4115189:
 
@@ -675,7 +667,7 @@ The example has partly been adopted from [an example of wikidata-cli](https://gi
 
 ### Abbreviations
 
-~~~{.example .yaml}
+~~~example
 Q4115189  # colons are optional before an intended block or list
 
   # claims do not need to be put under key 'claims'
@@ -695,7 +687,7 @@ Q4115189  # colons are optional before an intended block or list
 
 Repeated keys are always merged. Repeated values are merged into lists.
 
-~~~{.example .yaml}
+~~~example
 Q316
   labels
     en: love
@@ -894,8 +886,10 @@ Some data types can be converted to each other by implicit or explicit [type cas
 
 ## Assignments
 
-    ?instance-of := P31
-    ?+instace-or-subclass-of := P31 | P279
+~~~example
+?instance-of := P31
+?+instace-or-subclass-of := P31 | P279
+~~~
 
 This corresponds to `BIND` in SPARQL.
 
@@ -905,10 +899,12 @@ Variables can only be assigned once.
 
 Simple statements can be expressed in QuickStatements syntax extended by variables:
 
-    ?human P31  Q5          # variable item, property, value
-    ?human P569 1952-03-11  # same with date as value
-    Q42 P27 ?               # country of citizenship (value not bound to variable)
-    ? ? ?                   # all possible statements
+~~~example
+?human P31  Q5          # variable item, property, value
+?human P569 1952-03-11  # same with date as value
+Q42 P27 ?               # country of citizenship (value not bound to variable)
+? ? ?                   # all possible statements
+~~~
 
 Property path inspired by SPARQL are useful:
 
@@ -935,13 +931,15 @@ True
 
 **Constraints** can be expressed with [rule operators].
 
-    ?work P50 ?  => ...             # if item has an author 
+~~~example
+?work P50 ?  => ...             # if item has an author 
 
-    # all items must be instance of subclass of something
-    ?item an Item => ?item P31|P279 ?
+# all items must be instance of subclass of something
+?item an Item => ?item P31|P279 ?
 
-	# in contrast
-    ?item P31|P279 ?   # an item that is an instance or subclass of something
+# in contrast
+?item P31|P279 ?   # an item that is an instance or subclass of something
+~~~
 
 # Operators
 
@@ -959,22 +957,26 @@ Can be used to construct lists
 
 Normal equality operators make heavy use of [type coercion]. Strict equality operators require both operands to have exactely the same [data type].
 
-    ==
-    !=
+~~~example
+?a == ?b    # normal equality
+?a != ?b
 
-    ===
-    !==
+?a === ?b   # strict equality
+?a !== ?b
 
-    !
+!?a         # booleannegation
+~~~
 
 ## comparision
 
 Values of comparable data types can be compared with:
 
-    >
-    >=
-    <
-    <=
+~~~example
+?a >  ?b
+?a >= ?b
+?a <  ?b
+?a <= ?b
+~~~
 	
 Comparing non-comparable data types always returns `False`.
 
@@ -982,8 +984,10 @@ Comparing non-comparable data types always returns `False`.
 
 To match a value against a regular expression:
 
-	=~
-	!~
+~~~example
+?a =~ ?regex
+?a !~ ?regex
+~~~
 
 :::TODO
 Support (named) capturing groups (implicit assignment), e.g.
@@ -1022,25 +1026,24 @@ The assignment operator `:=` can be used to define [variables].
 
 Infix [set] operators:
 
-	... | ... | ...
-	... & ... & ...
-	... in ...
+~~~example
+... | ... | ...
+... & ... & ...
+... in ...
+~~~
 
 Prefix set operators `any` and `all`:
 
-	any( ... )
-	all( ... )
-
-<div class="example">
-
-> Short names of entities (acronyms, abbreviations etc.) should also be aliases
-
+~~~example
+any( ... )
+all( ... )
 ~~~
+
+~~~example
+# Short names of entities (acronyms, abbreviations etc.) should also be aliases
 ?entity P1813"short name" ?name =>
   ?name in ?entity.aliases
 ~~~
-
-</div>
 
 ## range operator
 
@@ -1067,11 +1070,23 @@ String(2018-12-31) === "2018-12-31"
 
 ## rule operators
 
-    =>	 # material implication (if...then... / ...implies...)
-    then # alias
+~~~example
+=>	 # material implication (if...then... / ...implies...)
 
-	<=>  # biconditional (...if and only if...)
-    iff  # alias
+# alternative syntax
+if ...
+   ...
+else
+  ...
+
+if
+  ...
+then
+  ...
+
+<=>  # biconditional (...if and only if...)
+iff  # alias
+~~~
 
 Rules can also be written with keywords `if`, `then`, `else`, `unless`, `case`...
 
@@ -1137,7 +1152,7 @@ Kukulu has been influenced by:
 
 # Grammar
 
-Formal grammar is work in progress. EBNF rules from this document are collected in file [grammar.txt](grammar.txt).
+Formal grammar is work in progress.
 
 ~~~ebnf
 Script          ::=  ( Expression )*

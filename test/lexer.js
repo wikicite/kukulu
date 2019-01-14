@@ -27,6 +27,13 @@ const examples = {
     "Indent", "PropertyId", "EOL", "PropertyId", "EOL",
     "Dedent",
   ],
+
+  // operators 'in' and 'an' vs. attribute names
+  "Q1 an Item": ["ItemId", "An", "DataType"],
+  "Q1\n  alias": ["ItemId", "EOL", "Indent", "AttributeName", "EOL", "Dedent"], 
+  "Q1.an": ["ItemId", "Dot", "AttributeName"], 
+  "?x in ?y": ["Variable", "In", "Variable"],
+  "Q1.in": ["ItemId", "Dot", "AttributeName"],
 }
 
 describe("lexer", () => {

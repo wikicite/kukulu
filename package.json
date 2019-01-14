@@ -19,7 +19,11 @@
     "lint": "eslint ./**/*.js ./bin/*",
     "fix": "eslint --fix ./**/*.js ./bin/*",
     "lint-staged": "lint-staged",
-    "diagram": "./bin/diagram"
+    "diagram": "./bin/diagram",
+    "codemirror": "./bin/codemirror",
+    "webpack": "webpack --config webpack.config.js",
+    "pandoc": "pandoc -s -F filter.pl --no-highlight --template src/template.html --toc -o dist/index.html src/metadata.yaml src/kukulu.md",
+    "spec": "(npm run diagram & npm run codemirror) && npm run webpack && npm run pandoc"
   },
   "lint-staged": {
     "**/*.js": [
@@ -42,11 +46,20 @@
     "lodash": "^4.17.11"
   },
   "devDependencies": {
+    "bootstrap": "^4.2.1",
+    "codemirror": "^5.42.2",
+    "css-loader": "^2.1.0",
     "eslint": "^5.12.0",
+    "font-awesome": "^4.7.0",
     "glob": "^7.1.3",
+    "jquery": "^3.3.1",
     "lint-staged": "^7.3.0",
+    "mini-css-extract-plugin": "^0.5.0",
     "mocha": "^5.2.0",
     "pre-commit": "^1.2.2",
-    "should": "^13.2.3"
+    "should": "^13.2.3",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1"
   }
 }

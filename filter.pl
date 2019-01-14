@@ -5,22 +5,16 @@ use Pandoc::Elements;
 
 pandoc_filter 'CodeBlock.example' => sub {
     [
-        Div attributes { class => 'Alert' },
-        [ Plain [ Strong [ Str "example" ] ], $_ ]
-    ];
-  },
-  'div.example' => sub {
-    [
-        Div attributes { class => 'Alert' },
-        [ Plain [ Strong [ Str "example" ] ], @{ $_->content } ]
+        Div attributes { class => 'card-body example' },
+        [ CodeBlock attributes { class => 'kukulu' }, $_->content ]
     ];
   },
   'CodeBlock.ebnf' => sub {
-    [ Div attributes { class => 'Success' }, [$_] ];
+    [ Div attributes { class => 'card-body ebnf' }, [$_] ];
   },
   'div.TODO' => sub {
     [
-        Div attributes { class => 'Warning' },
+        Div attributes { class => 'alert alert-primary' },
         [ Plain [ Strong [ Str "TODO" ] ], @{ $_->content } ]
     ];
   },
