@@ -10,8 +10,8 @@ describe("parser", () => {
   let validExamples = glob.sync("examples/*.kkl")
   let invalidExamples = glob.sync("examples/invalid-grammar/*.kkl")
 
-  it("parses examples ("+validExamples.length+")", () => {
-    validExamples.forEach(file => {
+  validExamples.forEach(file => {
+    it(`parses ${file}`, () => {
       let input = fs.readFileSync(file, "utf8")
       let tokens = Lexer.tokenize(input)
       should(tokens.errors).be.empty()
@@ -21,8 +21,8 @@ describe("parser", () => {
     })
   })
 
-  it("detects invalid scripts ("+invalidExamples.length+")", () => {
-    invalidExamples.forEach(file => {
+  invalidExamples.forEach(file => {
+    it(`detects error in ${file}`, () => {
       let input = fs.readFileSync(file, "utf8")
       let tokens = Lexer.tokenize(input)
       should(tokens.errors).be.empty()

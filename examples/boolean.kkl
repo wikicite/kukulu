@@ -13,6 +13,8 @@ Q1 == ?x
 ?x.length >= ?x.length
 Q1.label.en != Q2.label.en
 Q1.label.en =~ "foo"
+Q1 in ?set
+Q1 an Entity
 
 !Q1 === False
 !!Q1.id !== False

@@ -23,19 +23,41 @@ The goal of Kukulu is to provide a simple data language designed for the Wikibas
 
 ## Overview
 
-Features of the Kukulu data language can be divided into three levels that build upon each other:
+Features of the Kukulu data language can be divided into three levels:
 
-* A [serialization language]
+* A [serialization language] to express Wikibase content
 
-* A [query language]
+* A [query language] to match patterns against Wikibase content
 
-* A [rule language]
+* A [rule language] to check or enforce simple if-then-rules in Wikibase content
 
-Additional features that can be used on each level include optional [annotations].
+The language is illustrated with several editable examples:
+
+~~~example
+# Syntax like QuickStatements
+Q4115189 P31 Q1 
+Q41576278 P373 "Antoni Ignacy Mietelski"       # Strings
+Q1214098 P1476 "Krzyżacy"@pl                   # Monolingual text
+Q41576483 P569 1839-00/year                    # Time 
+Q3033 P856 https://www.goettingen.de/          # URL
+
+# Alternative syntax like YAML
+Q3033:
+  P625: @51.533888/51.533888                   # Coordinate
+  P1082: 119177                                # Quantity
+  P576: novalue                                # special values
+
+# Qualifiers and references
+Q41577083 P570 +1586/7 P1319 +1586/9 U248 Q52  # like QuickStatement
+Q41577083 P570 +1586/7:						   # more readable
+  P1319: +1586/9
+  references:
+    P248: Q52
+~~~
 
 ## Limitations
 
-The current draft of Kukulu does not fully support the following elements that might be considered part of the Wikibase database model. Support may be added sooner or later:
+The current draft of Kukulu does not fully support the following elements that might be considered part of the Wikibase database model. Support may be added in the future:
 
 * namespace ids
 * badges
@@ -43,8 +65,6 @@ The current draft of Kukulu does not fully support the following elements that m
 * snaks-order
 * qualifiers-order
 * reference hashes
-
-The [query language] is more limited than SPARQL but easier for small queries. The [rule language] is in a very early state of developlemt and it requires additional discussion.
 
 # Background
 
@@ -76,6 +96,8 @@ Data bindings in addition to the PHP sources of Wikibase are available as part o
 [Wiki Client Library]: https://github.com/CXuesong/WikiClientLibrary
 
 ## Query and rule languages
+
+Wikibase instances can be queried in many ways.
 
 *This section needs to be extended*
 
@@ -133,11 +155,11 @@ KukuluDataType  ::=   'Bool' | 'Set' | 'Range' | 'DataType'
 Instances of entity types ([Item], [Property], [Lexeme], [Sense], and [Form]) are referened by their plain ID:
 
 ~~~example
-Q42		an  Item
-P31		a   Property
-L7		a   Lexeme
-L7-S1	a   Sense
-L7-F4	a   Form
+Q42        an  Item
+P31        a   Property
+L7        a   Lexeme
+L7-S1    a   Sense
+L7-F4    a   Form
 ~~~
 
 ~~~ebnf
@@ -350,8 +372,15 @@ A simple year cannot be abbreviated as plain integer value except if explicitly 
 - 2013        # value of type Quantity
 ~~~
 
+~~~ebnf
+Time        ::=  DateValue TimeValue? TimePrecision?
+DateValue   ::=  [+-]? YearValue ( '-' [0-9][0-9] ( '-' [0-9][0-9] )? )?
+YearValue   ::=  [0-9][0-9][0-9][0-9]+
+TimeValue   ::=
+~~~
+
 :::TODO
-Add formal syntax
+More readable precisions, e.g. `2013-12-01/month`
 :::
 
 ## Quantity
@@ -377,7 +406,7 @@ Quantities can be expressed in abbreviated form:
 Quantity        ::=  QuantityValue Unit?
 QuantityValue   ::=  Number Tolerance?
 Number          ::=  Decimal Exponent?
-Decimal         ::=  [+-]? ( [0-9]+ | [0-9]* '.' [0-9]+ )
+Decimal         ::=  [+-]? ( [0-9]* '.' )? [0-9]+ )
 Exponent        ::=  [eE] Integer
 Integer         ::=  [+-]? [0-9]+
 Tolerance       ::=  '~' | '!' | PlusMinus Number | '[' Number ',' Number ']'
@@ -388,9 +417,9 @@ Unit            ::=  'U' IdNumber [ Annotation ]
 The tolerances `~` and `!` can be interpreted as following:
 
 ~~~example
-42~   <=>  42+-0.5
-0.1~  <=>  0.1±0.05
-42!   <=>  42±0
+42~   ===  42+-0.5
+0.1~  ===  0.1±0.05
+42!   ===  42±0
 ~~~
 
 Note that every number in Kukulu is a Quantity:
@@ -668,14 +697,14 @@ The example has partly been adopted from [an example of wikidata-cli](https://gi
 ### Abbreviations
 
 ~~~example
-Q4115189  # colons are optional before an intended block or list
+Q4115189:  # colons are optional before an intended block or list
 
   # claims do not need to be put under key 'claims'
   P31: Q5
 
   P369: Q12345       # implicit 'value' key
 
-	# qualifiers do not need to be put under key 'qualifiers'
+    # qualifiers do not need to be put under key 'qualifiers'
     P580: 1970-01-01
       
     # one reference with properties starting with 'S' instead of 'P'
@@ -846,15 +875,15 @@ SELECT ?human ?birth WHERE {
 **Set variables** are bound to multiple values at one. A set variable is referenced with a question mark followed by plus or asterisk:
 
 ~~~example
-?*humans P31 Q5			# bound to the set of all humans 
+?*humans P31 Q5            # bound to the set of all humans 
 
-?human P31 Q5			# bound to each human
+?human P31 Q5            # bound to each human
 
-?human P40 ?+children	# bound to each parent and to the set of its children
+?human P40 ?+children    # bound to each parent and to the set of its children
 
-?human					# bound to
-  P31 Q5				# each human
-  ~P596 ?*birth			# and optionally its deprecated dates of birth
+?human                    # bound to
+  P31 Q5                # each human
+  ~P596 ?*birth            # and optionally its deprecated dates of birth
 ~~~
 
 See [set] and [set operators] for extended usage of set variables.
@@ -977,7 +1006,7 @@ Values of comparable data types can be compared with:
 ?a <  ?b
 ?a <= ?b
 ~~~
-	
+    
 Comparing non-comparable data types always returns `False`.
 
 ## regular expression
@@ -1071,7 +1100,7 @@ String(2018-12-31) === "2018-12-31"
 ## rule operators
 
 ~~~example
-=>	 # material implication (if...then... / ...implies...)
+=>     # material implication (if...then... / ...implies...)
 
 # alternative syntax
 if ...

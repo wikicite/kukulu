@@ -1,10 +1,24 @@
-# fixme: Detend missing
-#Q42:
-#  labels:
-#    en: "Douglas Adams"
-#    fr: ?
-#  P31: Q5
+# Indented Block after subject
+Q42:
+  labels:
+    en: "Douglas Adams"
+    fr: ?
+  P31: Q5
 
-# mixed mode
+?x:
+  labels:
+    en: ?
+
+Q1:
+  P31: Q5
+
+# Indented block after predicate
 Q42 P31:
   value: Q5
+
+# TODO: lists
+#Q42:
+#  aliases:
+#    en:
+#    - a
+#    - b
