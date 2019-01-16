@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="dcterms.date" content="2019-01-16" />
+  <title>Kukulu</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="main.css" />
+  <script src="bundle.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<div class="container">
+<div class="jumbotron">
+<h1 class="title">Kukulu</h1>
+<p class="subtitle">A data language for Wikibase</p>
+</div>
+<p class="date">2019-01-16</p>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#motivation">Motivation</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#limitations">Limitations</a></li>
+</ul></li>
+<li><a href="#background">Background</a><ul>
+<li><a href="#database-model">Database model</a></li>
+<li><a href="#data-bindings">Data bindings</a></li>
+<li><a href="#query-and-rule-languages">Query and rule languages</a></li>
+</ul></li>
+<li><a href="#data-types">Data types</a><ul>
+<li><a href="#entities">Entities</a><ul>
+<li><a href="#item">Item</a></li>
+<li><a href="#property">Property</a></li>
+<li><a href="#lexeme">Lexeme</a></li>
+<li><a href="#sense">Sense</a></li>
+<li><a href="#form">Form</a></li>
+</ul></li>
+<li><a href="#string">String</a></li>
+<li><a href="#monolingual-text">Monolingual text</a></li>
+<li><a href="#external-identifier">External identifier</a></li>
+<li><a href="#mathematical-expression">Mathematical expression</a></li>
+<li><a href="#url">Url</a></li>
+<li><a href="#time">Time</a></li>
+<li><a href="#quantity">Quantity</a></li>
+<li><a href="#coordinate">Coordinate</a></li>
+<li><a href="#media">Media</a></li>
+<li><a href="#tabular">Tabular</a></li>
+<li><a href="#shape">Shape</a></li>
+<li><a href="#additional-data-types">Additional data types</a><ul>
+<li><a href="#bool">Bool</a></li>
+<li><a href="#set">Set</a></li>
+<li><a href="#range">Range</a></li>
+<li><a href="#languagetag">LanguageTag</a></li>
+<li><a href="#languageset">LanguageSet</a></li>
+<li><a href="#datatype">DataType</a></li>
+</ul></li>
+<li><a href="#instances">Instances</a><ul>
+<li><a href="#true-and-false">True and False</a></li>
+<li><a href="#entity">Entity</a></li>
+<li><a href="#empty">Empty</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#syntax">Syntax</a><ul>
+<li><a href="#key-value-form">Key-value form</a><ul>
+<li><a href="#abbreviations">Abbreviations</a></li>
+<li><a href="#merging">Merging</a></li>
+<li><a href="#quotation">Quotation</a></li>
+</ul></li>
+<li><a href="#line-based-form">Line-based form</a></li>
+<li><a href="#mixed-form">Mixed form</a></li>
+<li><a href="#ranks">Ranks</a></li>
+<li><a href="#attributes">Attributes</a></li>
+</ul></li>
+<li><a href="#queries">Queries</a><ul>
+<li><a href="#variables">Variables</a><ul>
+<li><a href="#simple-variables">Simple variables</a></li>
+<li><a href="#set-variables">Set variables</a></li>
+</ul></li>
+<li><a href="#attributes-1">Attributes</a></li>
+<li><a href="#assignments">Assignments</a></li>
+<li><a href="#statements">Statements</a></li>
+<li><a href="#query-evaluation">Query evaluation</a></li>
+</ul></li>
+<li><a href="#rules">Rules</a></li>
+<li><a href="#operators">Operators</a><ul>
+<li><a href="#semicolon">;</a></li>
+<li><a href="#section">,</a></li>
+<li><a href="#boolean-operators">boolean operators</a></li>
+<li><a href="#comparision">comparision</a></li>
+<li><a href="#regular-expression">regular expression</a></li>
+<li><a href="#a-an">a / an</a></li>
+<li><a href="#in">in</a></li>
+<li><a href="#assignment">Assignment</a></li>
+<li><a href="#set-operators">Set operators</a></li>
+<li><a href="#range-operator">range operator</a></li>
+<li><a href="#type-casting">Type casting</a></li>
+<li><a href="#rule-operators">rule operators</a></li>
+</ul></li>
+<li><a href="#annotations">Annotations</a></li>
+<li><a href="#background-1">Background</a></li>
+<li><a href="#grammar">Grammar</a><ul>
+<li><a href="#syntax-diagram">Syntax diagram</a></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+</ul>
+</nav>
+<div class="Warning">
+<p>This document contains no official, established, or final specification but a request for comments. See</p>
+<ul>
+<li><a href="https://github.com/wikicite/kukulu" class="uri">https://github.com/wikicite/kukulu</a> for source code and issue tracker</li>
+<li><a href="#syntax-diagram">syntax diagram</a> for a preliminary formal grammar</li>
+</ul>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p><strong>Kukulu</strong> (named after the Hawaiian word <em>kūkulu</em>: to build, construct) is a formal language to express, query, and model data in the database model of <a href="https://wikiba.se/">Wikibase</a>. Wikibase is primarily known for the knowledge base <a href="https://www.wikidata.org/">Wikidata</a>. Its <a href="#database-model">database model</a> has official serializations in JSON and in RDF. Kukulu defines an <a href="#syntax">alternative syntax</a> with extensions to express <a href="#queries">queries</a> and <a href="#rules">rules</a>.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Existing methods to express Wikibase data such as JSON and RDF can be complex to read and write (see <a href="#data-bindings">data bindings</a>). This also applies to query languages and methods to express rules and constraints (see <a href="#query-and-rule-languages">query and rule languages</a>).</p>
+<p>The goal of Kukulu is to provide a simple data language designed for the Wikibase <a href="#database-model">database model</a>. It is inspired by QuickStatements format among other influences. The data language is not intended to replace all existing alternatives but to cover most typical use cases.</p>
+<h2 id="overview">Overview</h2>
+<p>Features of the Kukulu data language can be divided into three levels:</p>
+<ul>
+<li><p>A <a href="#syntax">serialization language</a> to express Wikibase content</p></li>
+<li><p>A <a href="#queries">query language</a> to match patterns against Wikibase content</p></li>
+<li><p>A <a href="#rules">rule language</a> to check or enforce simple if-then-rules in Wikibase content</p></li>
+</ul>
+<p>The language is illustrated with several editable examples:</p>
+<div class="card-body example">
+<pre class="kukulu"><code># Syntax like QuickStatements
+Q4115189 P31 Q1 
+Q41576278 P373 &quot;Antoni Ignacy Mietelski&quot;       # Strings
+Q1214098 P1476 &quot;Krzyżacy&quot;@pl                   # Monolingual text
+Q41576483 P569 1839-00/year                    # Time 
+Q3033 P856 https://www.goettingen.de/          # URL
+
+# Alternative syntax like YAML
+Q3033:
+  P625: @51.533888/51.533888                   # Coordinate
+  P1082: 119177                                # Quantity
+  P576: novalue                                # special values
+
+# Qualifiers and references
+Q41577083 P570 +1586/7 P1319 +1586/9 U248 Q52  # like QuickStatement
+Q41577083 P570 +1586/7:                        # more readable
+  P1319: +1586/9
+  references:
+    P248: Q52</code></pre>
+</div>
+<h2 id="limitations">Limitations</h2>
+<p>The current draft of Kukulu does not fully support the following elements that might be considered part of the Wikibase database model. Support may be added in the future:</p>
+<ul>
+<li>namespace ids</li>
+<li>badges</li>
+<li>claim identifiers</li>
+<li>snaks-order</li>
+<li>qualifiers-order</li>
+<li>reference hashes</li>
+</ul>
+<h1 id="background">Background</h1>
+<h2 id="database-model">Database model</h2>
+<p>The <strong>database model of Wikibase</strong> (also referred to as <em>conceptual data model of Wikibase</em>) is <a href="https://github.com/wmde/WikibaseDataModel">implemented canonically in PHP</a> and <a href="https://www.mediawiki.org/wiki/Wikibase/DataModel">described at MediaWiki.org</a>. The model is most visible through the Wikibase user interface. This specification assumes basic knowledge of the Wikibase database model and its terminology.</p>
+<p>A good starting point to learn about the Wikibase database model in practice is the <a href="https://www.wikidata.org/wiki/Wikidata:Introduction">Wikidata introduction</a> and help pages such as <a href="https://www.wikidata.org/wiki/Help:Items">Help:Items</a>, <a href="https://www.wikidata.org/wiki/Help:Statements">Help:Statements</a>, and <a href="https://www.wikidata.org/wiki/Help:Lexemes">Help:Lexemes</a>. The best way to get familiar with data in Wikibase is regularly contributing to Wikidata.</p>
+<h2 id="data-bindings">Data bindings</h2>
+<p>Official serializations of the Wikibase database model exist <a href="https://www.mediawiki.org/wiki/Wikibase/DataModel/JSON">in JSON</a> and <a href="https://www.mediawiki.org/wiki/Wikibase/DataModel/RDF">in RDF</a>. Additional serializations exist as part of the tools <a href="https://www.wikidata.org/wiki/Help:QuickStatements">QuickStatements</a>, <a href="https://tools.wmflabs.org/tptools/wdql.html">GraphQL API</a>, and <a href="https://www.npmjs.com/package/wikidata-cli">wikidata-cli</a>. Data bindings in addition to the PHP sources of Wikibase are available as part of programming libraries at least in Lua (<a href="https://www.mediawiki.org/wiki/Extension:Wikibase_Client/Lua">MediaWiki Wikibase Client</a>), JavaScript (<a href="https://www.npmjs.com/package/wikidata-sdk">wikidata-sdk</a>), Java (<a href="https://www.mediawiki.org/wiki/Wikidata_Toolkit">Wikidata Toolkit</a>), Python (<a href="https://pypi.org/project/Wikidata/">Wikidata for Python</a>), and .NET (<a href="https://github.com/CXuesong/WikiClientLibrary">Wiki Client Library</a>).</p>
+<h2 id="query-and-rule-languages">Query and rule languages</h2>
+<p>Wikibase instances can be queried in many ways.</p>
+<p><em>This section needs to be extended</em></p>
+<ul>
+<li>SPARQL (see <a href="https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service">Wikidata query service</a>)</li>
+<li><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_ShEx">ShEX for Wikidata</a>,</li>
+<li><a href="https://tools.wmflabs.org/tptools/wdql.html">GraphQL API</a></li>
+<li>Programming libraries</li>
+</ul>
+<h1 id="data-types">Data types</h1>
+<p>Kukulu supports all Wikibase data types including the WikibaseLexeme extension:</p>
+<ul>
+<li><a href="#entities">Entities</a>
+<ul>
+<li><a href="#item">Item</a> and <a href="#property">Property</a></li>
+<li><a href="#lexeme">Lexeme</a>, <a href="#sense">Sense</a>, and <a href="#form">Form</a></li>
+</ul></li>
+<li><a href="#string">String</a>
+<ul>
+<li><a href="#mathematical-expression">Mathematical expression</a></li>
+<li><a href="#external-identifier">External Identifier</a></li>
+<li><a href="#url">Url</a></li>
+</ul></li>
+<li><a href="#monolingual-text">Monolingual text</a></li>
+<li><a href="#time">Time</a></li>
+<li><a href="#quantity">Quantity</a></li>
+<li><a href="#coordinate">Coordinate</a></li>
+<li><a href="#media">Media</a>
+<ul>
+<li><a href="#tabular">Tabular</a></li>
+<li><a href="#shape">Shape</a></li>
+</ul></li>
+</ul>
+<p>All data types are reserved keywords:</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>WikibaseDataType ::= &#39;Item&#39; | &#39;Property&#39; | &#39;Lexeme&#39; | &#39;Sense&#39; | &#39;Form&#39; |
+                     &#39;String&#39; | &#39;Text&#39; | &#39;Math&#39; | &#39;Time&#39; | &#39;Id&#39; | &#39;Url&#39; |
+                     &#39;Quantity&#39; | &#39;Coordinate&#39; | &#39;Shape&#39; | &#39;Media&#39; | &#39;Tabular&#39;</code></pre>
+</div>
+<p>Kukulu defines additional data types:</p>
+<ul>
+<li><a href="#bool">Bool</a></li>
+<li><a href="#set">Set</a></li>
+<li><a href="#range">Range</a></li>
+<li><a href="#languagetag">LanguageTag</a></li>
+<li><a href="#languageset">LanguageSet</a></li>
+<li><a href="#datatype">DataType</a></li>
+</ul>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>KukuluDataType  ::=   &#39;Bool&#39; | &#39;Set&#39; | &#39;Range&#39; | &#39;DataType&#39;
+                      &#39;LanguageTag&#39; | &#39;LanguageSet&#39;</code></pre>
+</div>
+<h2 id="entities">Entities</h2>
+<p>Instances of entity types (<a href="#item">Item</a>, <a href="#property">Property</a>, <a href="#lexeme">Lexeme</a>, <a href="#sense">Sense</a>, and <a href="#form">Form</a>) are referened by their plain ID:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Q42        an  Item
+P31        a   Property
+L7        a   Lexeme
+L7-S1    a   Sense
+L7-F4    a   Form</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>IdNumber        ::=  [1-9] [0-9]*
+ItemId          ::=  &#39;Q&#39; IdNumber
+PropertyId      ::=  &#39;P&#39; IdNumber
+LexemeId        ::=  &#39;L&#39; IdNumber
+SenseId         ::=  LexemeId &#39;-&#39; &#39;S&#39; IdNumber
+FormId          ::=  LexemeId &#39;-&#39; &#39;F&#39; IdNumber</code></pre>
+</div>
+<p>Entities can always be followed by an <a href="#annotations">annotation</a>.</p>
+<p>Entities have additional read-only attributes:</p>
+<ul>
+<li><code>id</code> gives the entity id as <a href="#string">String</a></li>
+<li><code>uri</code> gives the entity URI as <a href="#url">Url</a></li>
+<li><code>bool</code> gives the <a href="#bool">Bool</a> value <code>True</code> if the entity exists and <code>False</code> otherwise</li>
+</ul>
+<div class="card-body example">
+<pre class="kukulu"><code>Q42.id   === &quot;Q42&quot;
+Q42.uri  === &lt;http://www.wikidata.org/entity/Q42&gt;
+Q42.bool === True
+Q6.bool  === False  # does not exist in Wikidata</code></pre>
+</div>
+<h3 id="item">Item</h3>
+<p>Items have attributes <code>labels</code>, <code>descriptions</code>, <code>aliases</code>, <code>claims</code>, and <code>sitelinks</code>. The read-only attributes <code>lastrevid</code> and <code>modified</code> give the internal revision id (as <a href="#quantity">Quantity</a>) and the timestamp of last modification (as <a href="#time">Time</a>).</p>
+<h3 id="property">Property</h3>
+<p>Properties habe same attributes like <a href="#item">items</a>.</p>
+<h3 id="lexeme">Lexeme</h3>
+<p>Lexemes have attributes <code>lemmas</code>, <code>category</code>, <code>language</code>, <code>claims</code>, <code>senses</code>, and <code>forms</code>. The attribute <code>category</code> equals to the lengthy key <code>lexicalCategory</code> in the JSON <a href="#data-bindings">data binding</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>L7:
+  lemmas:
+    en: cat
+  category: Q1084&#39;substantive&#39;
+  language: Q1860
+  ...
+  # TODO: exemplify senses and forms</code></pre>
+</div>
+<p>…</p>
+<h3 id="sense">Sense</h3>
+<p>…</p>
+<h3 id="form">Form</h3>
+<p>…</p>
+<h2 id="string">String</h2>
+<p>Strings (reserved word <code>String</code>) can be expressed quoted by double quotes (<code>&quot;...&quot;</code>) or unquoted. Unquoted strings are possible following <code>:</code> or <code>:=</code> if they start with a letter or digit and don’t contain the character sequence <code>#</code>.</p>
+<p>Quoted strings use same escape rules like JSON grammar except escape sequences also include <code>\'</code>.</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>String           ::=  QuotedString | PlainString
+QuotedString     ::=  &#39;&quot;&#39; (StringCharacter | EscapedCharacter)* &#39;&quot;&#39;
+StringCharacter  ::=  [#x20-#x10ffff] - [&quot;\]   # exclude U+22 (&quot;) and U+5C (\)
+EscapedCharacter ::=  &#39;\&#39; ( &#39;&quot;&#39; | &#39;&#39;&#39; | &#39;\&#39; | &#39;/&#39; | &#39;b&#39; | &#39;n&#39; | &#39;r&#39; | &#39;t&#39; | &#39;u&#39; Hex Hex Hex Hex )
+Hex              ::=  &#39;u&#39; [0-9A-Za-z] [0-9A-Za-z] [0-9A-Za-z] [0-9A-Za-z] </code></pre>
+</div>
+<p>A third type of strings is used for <a href="#annotations">annotations</a>.</p>
+<p>The attribute <code>length</code> of a string gives its number of Unicode characters after NFCK normalization.</p>
+<p>Casting to String is done with the <code>str</code> attribute:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Url(?str) === ?x.str</code></pre>
+</div>
+<h2 id="monolingual-text">Monolingual text</h2>
+<p>Monolingual text (reserved word <code>Text</code>) can be expressed by a quoted string directly followed a <a href="#languagetag">language tag</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>&quot;love&quot;@en
+&quot;حب&quot;@ar</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>MonolingualText ::=  QuotedString LanguageTag</code></pre>
+</div>
+<p>The read-only attribute <code>value</code> gives the <a href="#string">string</a> value and the attribute <code>language</code> gives the <a href="#languagetag">language tag</a>:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?text == &quot;xxx&quot;@und
+&lt;=&gt;
+?text.value == &quot;xxx&quot; &amp;&amp; ?text.language == @und</code></pre>
+</div>
+<h2 id="external-identifier">External identifier</h2>
+<p>External identifiers (reserved word <code>Id</code>) are expressed as <a href="#string">strings</a>. To explicitly state that an identifier is not a string use a condition its type:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>&quot;foo&quot;
+&quot;12345&quot; an Id</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>ExternalId      ::=  String</code></pre>
+</div>
+<h2 id="mathematical-expression">Mathematical expression</h2>
+<p>Mathematical expressions (reserved word <code>Math</code>) are expressed as <a href="#string">strings</a>. To explicitly state that a mathematical expression is not a string use a condition on its type.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>&quot;e^{i \pi} + 1 = 0&quot; 
+&quot;e = mc^2&quot; a Math</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>MathExpression  ::=  String</code></pre>
+</div>
+<h2 id="url">Url</h2>
+<p>Values of data type <code>Url</code> can be expressed as <a href="#string">strings</a> or unqoted URLs.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>&quot;https://www.wikidata.org/&quot;
+https://www.wikidata.org/
+&lt;https://www.wikidata.org/&gt;
+http://example.org</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>URL             ::=  PlainURL | QuotedURL
+PlainURL        ::=  [a-z]+ &#39;://&#39; [^\s&lt;&gt;&quot;{}|^`\]+ 
+QuotedURL       ::=  &#39;&lt;&#39; PlainURL &#39;&gt;&#39;</code></pre>
+</div>
+<p>Casting to Url is done with the <code>uri</code> attribute:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Url(?x) === ?x.uri</code></pre>
+</div>
+<h2 id="time">Time</h2>
+<p>Values of data type <code>Time</code> are represented with its attributes <code>time</code>, <code>timezone</code>, <code>precision</code>, <code>before</code>, <code>after</code>, and <code>calendarmodel</code> (see Wikibase <a href="#database-model">database model</a> for details). The following example expresses the date <code>2001-12-31</code> with explicitly giving the default values for each optional attributes:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>time: +2001-12-31T00:00:00Z     # mandatory
+timezone: 0
+precision: 11
+before: 0
+after: 0
+calendarmodel: Q1985727</code></pre>
+</div>
+<p>The same time can also be expressed in any of the following forms:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>+2001-12-31T00:00:00Z       # full form
++2001-12-31T00:00:00+00:00  # explicit timezone
++2001-12-31T00:00:00Z/11    # explicit precision
++2001-12-31T00:00           # some optional parts left out
+2001-12-31                  # all optional parts left out</code></pre>
+</div>
+<p>If days are omitted or set to zero, the default precision is changed to <code>10</code> (month):</p>
+<div class="card-body example">
+<pre class="kukulu"><code>2013-12-00
+2013-12
+2013-12/10</code></pre>
+</div>
+<p>If days and month are omitted or set to zero, the default precision is changed to <code>9</code> (year):</p>
+<div class="card-body example">
+<pre class="kukulu"><code># equivalent:
+2013-00-00
+2013-00
+2013+00
+2013/8
+2013+00/8
+
+# not a year but a quantity:
+2013</code></pre>
+</div>
+<p>A simple year cannot be abbreviated as plain integer value except if explicitly given as value of attribute <code>time</code>:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>- time: 2013  # value of type Time with time set to +2013-00-00T00:00::Z and precision 9
+- 2013        # value of type Quantity</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>Time        ::=  DateValue TimeValue? TimePrecision?
+DateValue   ::=  [+-]? YearValue ( &#39;-&#39; [0-9][0-9] ( &#39;-&#39; [0-9][0-9] )? )?
+YearValue   ::=  [0-9][0-9][0-9][0-9]+
+TimeValue   ::=</code></pre>
+</div>
+<div class="alert alert-primary">
+<strong>TODO</strong>
+<p>More readable precisions, e.g. <code>2013-12-01/month</code></p>
+</div>
+<h2 id="quantity">Quantity</h2>
+<p>Values of data type <code>Quantity</code> (known as <a href="http://wikiba.se/ontology#Quantity">Quantity</a> in the Wikibase ontology) are represented with its attributes <code>amount</code>, <code>lowerBound</code>, <code>upperBound</code>, and <code>unit</code> (see Wikibase <a href="#database-model">database model</a> for details). The attributes <code>lowerBound</code> and <code>upperBound</code> are optional and have no default values. The attribute <code>unit</code> is optional with the special default value <code>1</code> and data type <a href="#item">item</a> otherwise.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>- amount: 42            # 42
+  unit: 1
+- amount: 42            # 42±0 (distinct from 42)
+  lowerBound: 42
+  upperBound: 42
+- amount: 99            # 99 bottles of beer
+  unit: Q23668
+- amount:               # 10.38±0.005 km²
+  upperBound: 10.385
+  lowerBound: 10.375</code></pre>
+</div>
+<p>Quantities can be expressed in abbreviated form:</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>Quantity        ::=  QuantityValue Unit?
+QuantityValue   ::=  Number Tolerance?
+Number          ::=  Decimal Exponent?
+Decimal         ::=  [+-]? ( [0-9]* &#39;.&#39; )? [0-9]+ )
+Exponent        ::=  [eE] Integer
+Integer         ::=  [+-]? [0-9]+
+Tolerance       ::=  &#39;~&#39; | &#39;!&#39; | PlusMinus Number | &#39;[&#39; Number &#39;,&#39; Number &#39;]&#39;
+PlusMinus       ::=  &#39;±&#39; | &#39;+/-&#39; | &#39;+-&#39;
+Unit            ::=  &#39;U&#39; IdNumber [ Annotation ]</code></pre>
+</div>
+<p>The tolerances <code>~</code> and <code>!</code> can be interpreted as following:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>42~   ===  42+-0.5
+0.1~  ===  0.1±0.05
+42!   ===  42±0</code></pre>
+</div>
+<p>Note that every number in Kukulu is a Quantity:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?string.length  in  12+-2   # length is 10 to 14</code></pre>
+</div>
+<h2 id="coordinate">Coordinate</h2>
+<p>Values of data type geographic coordinate (reserved word <code>Coordinate</code>, known as <a href="http://wikiba.se/ontology#GlobeCoordinate">GlobeCoordinate</a> in the Wikibase ontology) are represented with its attributes <code>latitude</code>, <code>longitude</code>, <code>precision</code>, and <code>globe</code>. (see Wikibase <a href="#database-model">database model</a> for details). The <code>globe</code> is a value of type <a href="#item">item</a> and set to <a href="http://www.wikidata.org/entity/Q2">Q2</a> by default.</p>
+<p>Quantities can be expressed in abbreviated form:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Q3669835 P625 @043.26193/010.92708</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>CoordinateValue ::= &#39;@&#39; Decimal &#39;/&#39; Decimal</code></pre>
+</div>
+<div class="alert alert-primary">
+<strong>TODO</strong>
+<ul>
+<li>Support precision (can it have arbitrary values?)</li>
+<li>Also support degree-minute-second format and mixed forms</li>
+</ul>
+</div>
+<h2 id="media">Media</h2>
+<p>Values of data type commons media (reserved word <code>Media</code>, known as <a href="http://wikiba.se/ontology#CommonsMedia">CommonsMedia</a> in the Wikibase ontology) …</p>
+<h2 id="tabular">Tabular</h2>
+<p>Values of data type tabular data (reserved word <code>Tabular</code>) …</p>
+<h2 id="shape">Shape</h2>
+<p>Values of data type geographic shape (reserved word <code>Shape</code>, known as <a href="http://wikiba.se/ontology#GeoShape">GeoShape</a> in the Wikibase ontology) …</p>
+<p><em>See also operator <a href="#in">in</a></em></p>
+<h2 id="additional-data-types">Additional data types</h2>
+<h3 id="bool">Bool</h3>
+<p>The <code>Bool</code> data type is returned for <a href="#boolean-operators">boolean operators</a>. The reserved words <code>True</code> and <code>False</code> hold predefined <a href="#instances">instances</a> of this data type.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?isItem := ?x.type === Item
+?isItem.type === Bool
+
+True.type === Bool</code></pre>
+</div>
+<p>Casting to Bool is done with the attribute <code>bool</code>:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Bool(?x) === ?x.bool</code></pre>
+</div>
+<h3 id="set">Set</h3>
+<p>Sets can be defined by <a href="#set-variables">set variables</a> and <a href="#set-operators">set operators</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code># extended type constraint on property P26: if A is spouse of B, then both must
+# be instance of human, fictional character, person, or mythical character
+
+?A P26 ?B  =&gt;  ?A &amp; ?B  P31  Q5 | Q95074 | Q215627 | Q4271324
+
+# equivalent with prefix set operators:
+
+?A P26 ?B =&gt; all(?A ?B) P31 any(Q5 Q95074 Q215627 Q4271324)</code></pre>
+</div>
+<p>The attribute <code>length</code> of a set gives the number of elements in a set as <a href="#quantity">Quantity</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code># works with more then 100 authors
+?work P50 ?*authors ; ?authors.length &gt; 100
+
+# Entity := Item | Property | Lexeme | Sense | Form
+Entity.length === 5</code></pre>
+</div>
+<p>See also operator <a href="#in">in</a>.</p>
+<p>The reserved keyword <a href="#empty"><code>Empty</code></a> denotes the empty set.</p>
+<h3 id="range">Range</h3>
+<p>String, Time, and Quantity can be combined to ranges with the <a href="#range-operator">range operator</a>:</p>
+<pre><code>&quot;a&quot;...&quot;z&quot;
+1901-01-01...2000-12-31
+1...42  </code></pre>
+<p>Indiviual values can be checked whether they are part of a range, for instance:</p>
+<pre><code>?date in 1901-01-01...2000-12-31</code></pre>
+<p>is equivalent to</p>
+<pre><code>?date &gt;= 1901-01-01
+?date &lt;= 2000-12-13</code></pre>
+<p>The attribute <code>upper</code> and <code>lower</code> give the upper and lower bound of a set, respectively.</p>
+<p><em>See also operator <a href="#in">in</a></em></p>
+<h3 id="languagetag">LanguageTag</h3>
+<p>Language codes are used at values of type <a href="#monolingual-text">monolingual text</a> and for <a href="#annotations">annotations</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>@ar
+@zh-yue
+@mis-x-Q36790</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>LanguageTag     ::=  &#39;@&#39; [a-zA-Z]+ (&#39;-&#39; [a-zA-Z0-9]+)*</code></pre>
+</div>
+<p>Additional constraints may apply.</p>
+<div class="alert alert-primary">
+<strong>TODO</strong>
+<p>See <a href="https://www.wikidata.org/wiki/Help:Monolingual_text_languages" class="uri">https://www.wikidata.org/wiki/Help:Monolingual_text_languages</a>, <a href="https://meta.wikimedia.org/wiki/Language_codes" class="uri">https://meta.wikimedia.org/wiki/Language_codes</a>, and special language codes such as <code>mis-x-Q36790</code> (<em>specified where?</em>).</p>
+</div>
+<h3 id="languageset">LanguageSet</h3>
+<p>A language set is an infinite <a href="#set">set</a> of <a href="#languagetag">language tag</a> values.</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>LanguageSet     ::=  LanguageTag &#39;-&#39;</code></pre>
+</div>
+<div class="card-body example">
+<pre class="kukulu"><code>?en   := @en-     # @en | @en-US | @en-GB | ... 
+?misc := @mis-x-  # @mis-x-Q36790 | ...</code></pre>
+</div>
+<p>The <code>size</code> of a LanguageSet is not defined.</p>
+<h3 id="datatype">DataType</h3>
+<p>All <a href="#data-types">data type</a> keywords have data type <code>DataType</code>. The read-only attribute <code>uri</code> gives the URI of a data type in Wikibase ontology as <a href="#url">Url</a>. The read-only attribute <code>str</code> gives the keyword as <a href="#string">String</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Shape.str     === &quot;Shape&quot;
+Shape.uri     === &lt;http://wikiba.se/ontology#GeoShape&gt;</code></pre>
+</div>
+<h2 id="instances">Instances</h2>
+<p>Kukulu defines some reserved keywords for predefined expressions.</p>
+<h3 id="true-and-false">True and False</h3>
+<p>The keyword <code>True</code> and <code>False</code> are defined as instances of data type <a href="#bool">Bool</a>.</p>
+<h3 id="entity">Entity</h3>
+<p>The keyword <code>Entity</code> is defined as <a href="#set">Set</a> of the data types <a href="#item">Item</a>, <a href="#property">Property</a>, <a href="#lexeme">Lexeme</a>, <a href="#sense">Sense</a>, and <a href="#form">Form</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Entity === Item | Property | Lexeme | Sense | Form</code></pre>
+</div>
+<h3 id="empty">Empty</h3>
+<p>The keyword <code>Empty</code> ist defined as the empty <a href="#set">Set</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Empty.length === 0</code></pre>
+</div>
+<h1 id="syntax">Syntax</h1>
+<p><em>See <a href="#grammar">grammar</a> for additional syntax rules</em></p>
+<p>A Kukulu script consists of a newline-separated sequence of <strong>sentences</strong>.</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>Script      ::= Sentence? ( EOL Sentence? )*</code></pre>
+</div>
+<p>A sentence is serialized in one logical line, optionally followed by in intended block. Logical lines, blank lines, indentation, and comments follow Python syntax (see <a href="https://docs.python.org/3.8/reference/lexical_analysis.html%5D">lexical analysis in Python</a>). In addition it is possible to join logical lines with the <a href="#semicolon">semicolon operator</a>.</p>
+<p>Entities with their labels, aliases, claims etc. can be serialized in <a href="#key-value-form">key-value form</a>, in <a href="#line-based-form">line-based form</a>, and <a href="#mixed-form">mixed form</a>.</p>
+<h2 id="key-value-form">Key-value form</h2>
+<p>The <strong>key-value form</strong> is inspired by <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> (but differs in several ways).</p>
+<div class="card-body example">
+<pre class="kukulu"><code># entity identifier as root key
+Q4115189:
+
+  # labels, descriptions, and aliases with language tag as key of each value
+  labels:
+    ar: حب
+    en: love
+    es: amor
+  descriptions: 
+    ar: شعور انجذاب عاطفي تجاه شخص
+    en: strong, positive emotion based on affection
+
+  aliases:
+    # aliases can be given as list...
+    ar:
+    - محبة
+    - حُب
+    # ...or as single values
+    es: amar
+
+  sitelinks:
+    arwiki: حب
+    enwiki: Love
+    eswiki: Amor
+
+  claims:
+
+    # single value
+    P2002: bulgroz
+    P31: Q5
+
+    # list of values
+    P1775: 
+    - Q3576110
+    - Q12206942
+
+    # qualifiers, references, and ranks
+    P369:
+      value: Q12345
+
+      # single value
+      qualifiers:
+        P580: 1970-01-01
+      
+      # multiple values
+      references:
+      - P854: http://example.org/
+        P1932: Example
+      - P248: Q28549308
+
+      rank: normal            # either preferred, normal (default) or deprecated
+    
+    # values can also be given by their data type attributes
+    P1450:                    # e.g. monolingual text...
+      text: bulgroz
+      language: fr
+
+    P1106:                    #  ...or quantity
+      amount: 42
+      unit: Q42    </code></pre>
+</div>
+<p>The example has partly been adopted from <a href="https://github.com/maxlath/wikidata-edit/blob/master/docs/how_to.md#entity">an example of wikidata-cli</a> that uses a similar structure.</p>
+<h3 id="abbreviations">Abbreviations</h3>
+<div class="card-body example">
+<pre class="kukulu"><code>Q4115189:  # colons are optional before an intended block or list
+
+  # claims do not need to be put under key &#39;claims&#39;
+  P31: Q5
+
+  P369: Q12345       # implicit &#39;value&#39; key
+
+    # qualifiers do not need to be put under key &#39;qualifiers&#39;
+    P580: 1970-01-01
+      
+    # one reference with properties starting with &#39;S&#39; instead of &#39;P&#39;
+    S854: http://example.org/
+    S1932: Example</code></pre>
+</div>
+<h3 id="merging">Merging</h3>
+<p>Repeated keys are always merged. Repeated values are merged into lists.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Q316
+  labels
+    en: love
+  P31: Q9415
+
+Q4115189
+  P31: Q5
+
+Q316
+  labels
+    de: Liebe
+  P31: Q840396
+  P31: Q170774 
+
+&lt;=&gt; # equivalent
+
+Q4115189
+  P31: Q5
+
+Q316
+  labels
+    en: love
+    de: Liebe
+  P31
+  - Q9415
+  - Q840396
+  - Q170774 </code></pre>
+</div>
+<p>Merging is not applied between sections of a document. Sections are separated with an explicit <strong>section separator</strong> (<code>---</code> or on a line) and with <a href="#rules">rules</a> operators.</p>
+<h3 id="quotation">Quotation</h3>
+<p>Values must be quoted if they don’t start with a letter or digit or if they contain the character sequence <code>#</code>. See <a href="#string">String</a> for details.</p>
+<h2 id="line-based-form">Line-based form</h2>
+<p>The <strong>line-based form</strong> is inspired by <a href="https://www.wikidata.org/wiki/Help:QuickStatements">QuickStatements</a> syntax:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Q316 Len &quot;love&quot;
+Q316 Den &quot;strong, positive emotion based on affection&quot;
+Q316 Aes &quot;amores&quot; 
+Q316 Sarwiki &quot;حب&quot;
+
+# TODO: exemplify claims, including ranks and special values
+Q316 P31 Q9415
+
+# Value and qualifier
+Q41577083 P570 1586/7 P1319 1586/9</code></pre>
+</div>
+<p><em>TODO:</em> Check whether this syntax is fully compatible with QuickStatement (is QuickStatement syntax a subset of Kukulu?).</p>
+<h2 id="mixed-form">Mixed form</h2>
+<p><a href="#key-value-form">Key-value form</a> and [line based form] can be mixed. In fact they are only two sides of a spectrum.</p>
+<div class="card-body example">
+<pre class="kukulu"><code># qualifiers as key-values
+Q41577083 P570 1586/7:
+  P1319: 1586/9
+
+# values and qualifiers in key-value syntax
+Q41577083 P570:
+- value: 1586/7     # value
+  P1319: 1586/9     # qualifier
+
+# TODO: more variants...</code></pre>
+</div>
+<h2 id="ranks">Ranks</h2>
+<p><strong>Ranks</strong> can be expressed with <code>^</code> (preferred rank), <code>~</code> (deprecated rank), and <code>*</code> (any rank) preprending a property:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?person P463 ?organization      # truthy member-of (default)
+?person ~P463 ?organization     # deprecated member-of
+?person ^P463 ?organization     # preferred member-of (all statements)
+?person *P463 ?organization     # member-of (all statements)</code></pre>
+</div>
+<p>Note that predicates of qualifiers and references cannot have ranks.</p>
+<h2 id="attributes">Attributes</h2>
+<p>An <strong>attribute</strong> can be referenced inline prepended by a dot or intended followed by a colon. The attribute name must start with a lowercase letter, optionally followed by lowercase and uppercase letters:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>Q42.id == &quot;Q42&quot;
+
+Q42:
+  id: Q42</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>AttributeName   ::= [a-z] [a-zA-Z]</code></pre>
+</div>
+<p>The names <code>novalue</code> and <code>somevalue</code> are forbidden as attribute names.</p>
+<h1 id="queries">Queries</h1>
+<p>A <a href="#syntax">serialization</a> can be used as query to check whether the specified entities with given labels, aliases, claims etc. exists. <a href="#variables">Variables</a> can be used as placeholders for unknown entities, properties and values.</p>
+<h2 id="variables">Variables</h2>
+<p>Two types of variables exist:</p>
+<h3 id="simple-variables">Simple variables</h3>
+<p>Simple variables are bound do one value. They are referenced with a question mark followed by the variable name:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?entity:
+  labels:
+    en: ?label
+  aliases:
+    en:
+    - ?alias1
+    - ?alias2
+  claims:
+    P31: ?class
+    ?property: ?value   # any property except P31</code></pre>
+</div>
+<div class="card-body example">
+<pre class="kukulu"><code>?work P463 ?organization:
+  P580 ?start   # qualifier
+  S248 ?source  # reference</code></pre>
+</div>
+<p>A variable can be made <em>optional</em> with two question marks:</p>
+<div class="example">
+<div class="card-body example">
+<pre class="kukulu"><code>?human P31 Q5
+  P569 ??birthdate</code></pre>
+</div>
+<p>SPARQL equivalent:</p>
+<pre class="sparql"><code>SELECT ?human ?birth WHERE {
+  ?human wdt:P31 wd:Q5 .
+  OPTIONAL { ?human wdt:P596 ?birth }
+}</code></pre>
+</div>
+<h3 id="set-variables">Set variables</h3>
+<p><strong>Set variables</strong> are bound to multiple values at one. A set variable is referenced with a question mark followed by plus or asterisk:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?*humans P31 Q5            # bound to the set of all humans 
+
+?human P31 Q5            # bound to each human
+
+?human P40 ?+children    # bound to each parent and to the set of its children
+
+?human                    # bound to
+  P31 Q5                # each human
+  ~P596 ?*birth            # and optionally its deprecated dates of birth</code></pre>
+</div>
+<p>See <a href="#set">set</a> and <a href="#set-operators">set operators</a> for extended usage of set variables.</p>
+<h2 id="attributes-1">Attributes</h2>
+<p>Core elements of <a href="#entities">entities</a> should be accessible via their common (JSON) name:</p>
+<ul>
+<li><code>Q42</code><strong><code>.labels.en</code></strong> <code>== &quot;Douglas Adams&quot;</code></li>
+<li><code>L7</code><strong><code>.lemmas.en</code></strong> <code>== &quot;cat&quot;</code></li>
+<li>…</li>
+</ul>
+<p><strong>Methods</strong> should be provided to for each <a href="#data-types">data type</a>, e.g.</p>
+<ul>
+<li><code>Q42.</code><strong><code>type</code></strong> <code>== Item</code></li>
+<li><code>Q42.</code><strong><code>id</code></strong></li>
+<li><code>?text.</code><strong><code>language</code></strong> <code>== @en</code></li>
+<li><code>?lexeme.</code><strong><code>lexicalCategory</code></strong> <code>== Q1084 # noun</code></li>
+<li><code>?tabular.</code><strong><code>fields</code></strong></li>
+<li><code>2018-12-31.</code><strong><code>precision</code></strong> <code>== 11 # days</code></li>
+</ul>
+<p>A very small subset of these methods is available in SPARQL but not beyond XSD data types. Wikibase schema language should also do <strong>implicit type casting</strong> (also useful for comparison operator <code>==</code>):</p>
+<ul>
+<li><code>?uri.length</code> instead of <code>strlen(str(?uri))</code></li>
+</ul>
+<p>Some data types can be converted to each other by implicit or explicit <a href="#type-casting">type casting</a>.</p>
+<h2 id="assignments">Assignments</h2>
+<div class="card-body example">
+<pre class="kukulu"><code>?instance-of := P31
+?+instace-or-subclass-of := P31 | P279</code></pre>
+</div>
+<p>This corresponds to <code>BIND</code> in SPARQL.</p>
+<p>Variables can only be assigned once.</p>
+<h2 id="statements">Statements</h2>
+<p>Simple statements can be expressed in QuickStatements syntax extended by variables:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?human P31  Q5          # variable item, property, value
+?human P569 1952-03-11  # same with date as value
+Q42 P27 ?               # country of citizenship (value not bound to variable)
+? ? ?                   # all possible statements</code></pre>
+</div>
+<p>Property path inspired by SPARQL are useful:</p>
+<pre><code>?work P50 ? =&gt;                  # if item has an author 
+    ?work P31/P279* Q17537576   # then it must be subclass of creative work</code></pre>
+<h2 id="query-evaluation">Query evaluation</h2>
+<p>Queries can be evaluated against a Wikibase instance.</p>
+<pre><code>&gt; Q7    # does not exist in Wikidata
+Empty
+&gt; Q42 an Item
+True
+&gt; Q42.labels.en
+&quot;Douglas Adams&quot;
+&gt; Q42 P31 Q5
+True</code></pre>
+<h1 id="rules">Rules</h1>
+<p><strong>Constraints</strong> can be expressed with <a href="#rule-operators">rule operators</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?work P50 ?  =&gt; ...             # if item has an author 
+
+# all items must be instance of subclass of something
+?item an Item =&gt; ?item P31|P279 ?
+
+# in contrast
+?item P31|P279 ?   # an item that is an instance or subclass of something</code></pre>
+</div>
+<h1 id="operators">Operators</h1>
+<h3 id="semicolon">;</h3>
+<p>Can be used to merge logical lines. The logical line after semicolon has same intention level as the logical line before the operator.</p>
+<h3 id="section">,</h3>
+<p>Can be used to construct lists</p>
+<h2 id="boolean-operators">boolean operators</h2>
+<p>Normal equality operators make heavy use of <a href="#type-casting">type coercion</a>. Strict equality operators require both operands to have exactely the same <a href="#data-types">data type</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?a == ?b    # normal equality
+?a != ?b
+
+?a === ?b   # strict equality
+?a !== ?b
+
+!?a         # booleannegation</code></pre>
+</div>
+<h2 id="comparision">comparision</h2>
+<p>Values of comparable data types can be compared with:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?a &gt;  ?b
+?a &gt;= ?b
+?a &lt;  ?b
+?a &lt;= ?b</code></pre>
+</div>
+<p>Comparing non-comparable data types always returns <code>False</code>.</p>
+<h2 id="regular-expression">regular expression</h2>
+<p>To match a value against a regular expression:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?a =~ ?regex
+?a !~ ?regex</code></pre>
+</div>
+<div class="alert alert-primary">
+<strong>TODO</strong>
+<p>Support (named) capturing groups (implicit assignment), e.g.</p>
+<pre><code>?foo :=~ &quot;(.+), (.+)&quot;                    # assign ?1 and ?2
+?foo :=~ &quot;(?&lt;given&gt;.+), (?&lt;surname&gt;.+)&quot;  # assign ?given and ?surname</code></pre>
+</div>
+<h2 id="a-an">a / an</h2>
+<p>The operator <code>a</code> or its alias <code>an</code> can be used as shortcut to test the <a href="#data-types">data type</a> of an element:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?s  a  String  &lt;=&gt;  ?s.type  == String
+?x  an Item    &lt;=&gt;  ?x.type  == Item
+?id an Id|Url  &lt;=&gt;  ?id.type == Id|Url</code></pre>
+</div>
+<h2 id="in">in</h2>
+<p>The operator <code>in</code> can be used to check whether</p>
+<ul>
+<li>an value is member of a <a href="#set">Set</a></li>
+<li>an value is inside a <a href="#range">Range</a></li>
+<li>a <a href="#coordinate">coordinate</a> is inside a <a href="#shape">Shape</a></li>
+</ul>
+<h2 id="assignment">Assignment</h2>
+<p>The assignment operator <code>:=</code> can be used to define <a href="#variables">variables</a>.</p>
+<pre><code>?douglas := Q42 </code></pre>
+<h2 id="set-operators">Set operators</h2>
+<p>Infix <a href="#set">set</a> operators:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>... | ... | ...
+... &amp; ... &amp; ...
+... in ...</code></pre>
+</div>
+<p>Prefix set operators <code>any</code> and <code>all</code>:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>any( ... )
+all( ... )</code></pre>
+</div>
+<div class="card-body example">
+<pre class="kukulu"><code># Short names of entities (acronyms, abbreviations etc.) should also be aliases
+?entity P1813&quot;short name&quot; ?name =&gt;
+  ?name in ?entity.aliases</code></pre>
+</div>
+<h2 id="range-operator">range operator</h2>
+<p>The range operator <code>...</code> defines a <a href="#range">range</a>.</p>
+<div class="card-body example">
+<pre class="kukulu"><code>2012-01...2013-07
+Q1...Q7
+?a...?b</code></pre>
+</div>
+<p>Both parts of a range must have same <a href="#data-types">data type</a>.</p>
+<h2 id="type-casting">Type casting</h2>
+<p>All <a href="#data-types">data types</a> keywords can be used to convert between data types.</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>Time(&quot;2018-12-31&quot;) === 2018-12-31
+String(2018-12-31) === &quot;2018-12-31&quot;</code></pre>
+</div>
+<h2 id="rule-operators">rule operators</h2>
+<div class="card-body example">
+<pre class="kukulu"><code>=&gt;     # material implication (if...then... / ...implies...)
+
+# alternative syntax
+if ...
+   ...
+else
+  ...
+
+if
+  ...
+then
+  ...
+
+&lt;=&gt;  # biconditional (...if and only if...)
+iff  # alias</code></pre>
+</div>
+<p>Rules can also be written with keywords <code>if</code>, <code>then</code>, <code>else</code>, <code>unless</code>, <code>case</code>…</p>
+<p>See also [sets] for OR-clauses.</p>
+<h1 id="annotations">Annotations</h1>
+<p>An entity or variable can be followed by a single-quoted string:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?person:
+  P31&#39;instance of&#39; Q5&#39;human&#39;
+  P569&#39;date of birth&#39; ?date</code></pre>
+</div>
+<p>Applications can choose to ignore annotations, translate annotations, and/or check whether annotations match entity labels/lemmas.</p>
+<p>Annotations can have languages:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?person:
+  P31&#39;είναι&#39;@gr Q5&#39;Mensch&#39;@de
+  P569&#39;date of birth&#39; ?date</code></pre>
+</div>
+<p>The default annotation language can be set by a language tag, prepended with <code>@</code> on its own line:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>@gr
+?person:
+  P31&#39;είναι&#39; Q5&#39;άνθρωπος&#39;
+  @en
+  P569&#39;date of birth&#39; ?date</code></pre>
+</div>
+<p>If annotations are checked, the following should be equivalent:</p>
+<div class="card-body example">
+<pre class="kukulu"><code>?place Len &#39;Shangri-La&#39;
+
+?place&#39;Shangri-La&#39;@en</code></pre>
+</div>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>AnnotationString ::=  &quot;&#39;&quot; (StringCharacter | EscapedCharacter)* &quot;&#39;&quot;
+Annotation       ::=  AnnotationString [ LanguageTag ]</code></pre>
+</div>
+<h1 id="background-1">Background</h1>
+<p>Kukulu has been influenced by:</p>
+<ul>
+<li>QuickStatements</li>
+<li>YAML</li>
+<li>Python</li>
+<li>SPARQL</li>
+<li>N3</li>
+<li>ShEX</li>
+<li>Perl (Junctions, Regex)</li>
+<li>Prolog/Datalog (deductive reasoning)</li>
+<li>…</li>
+</ul>
+<h1 id="grammar">Grammar</h1>
+<p>Formal grammar is work in progress.</p>
+<div class="card-body ebnf">
+<pre class="ebnf"><code>Script          ::=  ( Expression )*
+...</code></pre>
+</div>
+<p>Unicode codepoints below U+20 are forbidden.</p>
+<h2 id="syntax-diagram">Syntax diagram</h2>
+<p>Grammar rules from the current (incomplete!) parser implementation:</p>
+<div class="railroad">
+
+
+
+<link rel='stylesheet' href='https://unpkg.com/chevrotain@4.1.1/diagrams/diagrams.css'>
+
+<script src='https://unpkg.com/chevrotain@4.1.1/diagrams/vendor/railroad-diagrams.js'></script>
+<script src='https://unpkg.com/chevrotain@4.1.1/diagrams/src/diagrams_builder.js'></script>
+<script src='https://unpkg.com/chevrotain@4.1.1/diagrams/src/diagrams_behavior.js'></script>
+<script src='https://unpkg.com/chevrotain@4.1.1/diagrams/src/main.js'></script>
+
+<div id="diagrams" align="center"></div>    
+
+<script>
+    window.serializedGrammar = [
+  {
+    "type": "Rule",
+    "name": "Script",
+    "orgText": "() => {\n      $.AT_LEAST_ONE_SEP({          \n        SEP: EOL,\n        DEF: () => {\n          $.OPTION(() => $.SUBRULE($.Sentence))\n        }\n      })\n    }",
+    "definition": [
+      {
+        "type": "RepetitionMandatoryWithSeparator",
+        "idx": 0,
+        "separator": {
+          "type": "Terminal",
+          "name": "EOL",
+          "label": "EOL",
+          "idx": 1,
+          "pattern": "\\n|\\r\\n?|[ \\t]*;[ \\t]*"
+        },
+        "definition": [
+          {
+            "type": "Option",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Sentence",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Sentence",
+    "orgText": "() => {\n      $.OR1([\n        {ALT: () => $.SUBRULE($.Rule)},\n        {ALT: () => {\n          $.SUBRULE($.Subject)\n          $.OR2([\n            {ALT: () => $.SUBRULE($.IntendedBlock)}, \n            {ALT: () => $.SUBRULE($.PredicateSentence)}, \n          ])\n        }},\n        {ALT: () => $.SUBRULE($.Assignment)},\n        {ALT: () => {\n          $.SUBRULE2($.Value)\n          $.OPTION(() => $.SUBRULE($.Comparison))\n        }},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 1,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Rule",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Subject",
+                "idx": 0
+              },
+              {
+                "type": "Alternation",
+                "idx": 2,
+                "definition": [
+                  {
+                    "type": "Flat",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "IntendedBlock",
+                        "idx": 0
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Flat",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "PredicateSentence",
+                        "idx": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Assignment",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Value",
+                "idx": 2
+              },
+              {
+                "type": "Option",
+                "idx": 0,
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "Comparison",
+                    "idx": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Subject",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => $.SUBRULE($.Entity)},\n        {ALT: () => $.CONSUME(Variable)}\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Entity",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Variable",
+                "label": "Variable",
+                "idx": 0,
+                "pattern": "\\?[?+*]?([a-zA-Z_][a-zA-Z0-9_-]*)?"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "IntendedBlock",
+    "orgText": "() => {\n      $.CONSUME(Colon)\n      $.CONSUME1(EOL)\n      $.CONSUME(Indent)\n      $.AT_LEAST_ONE(() => $.SUBRULE($.FieldLine))\n      $.CONSUME(Dedent)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "Colon",
+        "label": ":",
+        "idx": 0,
+        "pattern": ":"
+      },
+      {
+        "type": "Terminal",
+        "name": "EOL",
+        "label": "EOL",
+        "idx": 1,
+        "pattern": "\\n|\\r\\n?|[ \\t]*;[ \\t]*"
+      },
+      {
+        "type": "Terminal",
+        "name": "Indent",
+        "label": "Indent",
+        "idx": 0
+      },
+      {
+        "type": "RepetitionMandatory",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "FieldLine",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "Dedent",
+        "label": "Dedent",
+        "idx": 0
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "FieldLine",
+    "orgText": "() => {\n      $.SUBRULE($.Field)\n      $.OR([\n        {ALT: () => {\n          $.CONSUME(Colon)\n          $.SUBRULE1($.AnyValue)\n          $.CONSUME(EOL)\n        }},\n        {ALT: () => $.SUBRULE($.IntendedBlock)}\n      ]) \n    }",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "Field",
+        "idx": 0
+      },
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Colon",
+                "label": ":",
+                "idx": 0,
+                "pattern": ":"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "AnyValue",
+                "idx": 1
+              },
+              {
+                "type": "Terminal",
+                "name": "EOL",
+                "label": "EOL",
+                "idx": 0,
+                "pattern": "\\n|\\r\\n?|[ \\t]*;[ \\t]*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "IntendedBlock",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Field",
+    "orgText": "() => {\n      $.OR([\n        // TODO: allow ranked property?\n        {ALT: () => $.SUBRULE($.EntityId)},\n        {ALT: () => $.CONSUME(AttributeName)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "EntityId",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "AttributeName",
+                "label": "AttributeName",
+                "idx": 0,
+                "pattern": "[a-z][A-Za-z]*"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "PredicateSentence",
+    "orgText": "() => {\n      $.OPTION(() => $.CONSUME(Rank))\n      $.SUBRULE($.Predicate)\n      $.OR1([\n        {ALT: () => $.SUBRULE2($.IntendedBlock)},\n        {ALT: () => {\n          $.CONSUME(Colon)\n          $.SUBRULE1($.AnyValue)\n        }},\n        {ALT: () => {\n          $.SUBRULE2($.Value)\n          $.OR3([\n            {ALT: () => $.SUBRULE1($.IntendedBlock)},\n            {ALT: () => {\n              $.OPTION2(() => $.SUBRULE($.Qualifiers))\n              $.OPTION3(() => $.SUBRULE($.References))\n            }}\n          ])\n        }},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "Rank",
+            "label": "Rank",
+            "idx": 0,
+            "pattern": "[~*^]"
+          }
+        ]
+      },
+      {
+        "type": "NonTerminal",
+        "name": "Predicate",
+        "idx": 0
+      },
+      {
+        "type": "Alternation",
+        "idx": 1,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "IntendedBlock",
+                "idx": 2
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Colon",
+                "label": ":",
+                "idx": 0,
+                "pattern": ":"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "AnyValue",
+                "idx": 1
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Value",
+                "idx": 2
+              },
+              {
+                "type": "Alternation",
+                "idx": 3,
+                "definition": [
+                  {
+                    "type": "Flat",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "IntendedBlock",
+                        "idx": 1
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Flat",
+                    "definition": [
+                      {
+                        "type": "Option",
+                        "idx": 2,
+                        "definition": [
+                          {
+                            "type": "NonTerminal",
+                            "name": "Qualifiers",
+                            "idx": 0
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Option",
+                        "idx": 3,
+                        "definition": [
+                          {
+                            "type": "NonTerminal",
+                            "name": "References",
+                            "idx": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Predicate",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => {      \n          $.CONSUME(PropertyId)\n          $.OPTION( () => $.SUBRULE($.Annotation) )\n        }},\n        {ALT: () => $.CONSUME(Variable)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PropertyId",
+                "label": "PropertyId",
+                "idx": 0,
+                "pattern": "P[1-9][0-9]*"
+              },
+              {
+                "type": "Option",
+                "idx": 0,
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "Annotation",
+                    "idx": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Variable",
+                "label": "Variable",
+                "idx": 0,
+                "pattern": "\\?[?+*]?([a-zA-Z_][a-zA-Z0-9_-]*)?"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Qualifiers",
+    "orgText": "() => {\n      $.AT_LEAST_ONE(() => {\n        $.SUBRULE($.Predicate)\n        $.SUBRULE($.Value)\n      })\n    }",
+    "definition": [
+      {
+        "type": "RepetitionMandatory",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "Predicate",
+            "idx": 0
+          },
+          {
+            "type": "NonTerminal",
+            "name": "Value",
+            "idx": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "References",
+    "orgText": "() => {\n      $.AT_LEAST_ONE(() => {\n        $.CONSUME(ReferencePropertyId)\n        $.OPTION( () => $.SUBRULE($.Annotation) )\n        $.SUBRULE($.Value)\n      })\n    }",
+    "definition": [
+      {
+        "type": "RepetitionMandatory",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "ReferencePropertyId",
+            "label": "ReferencePropertyId",
+            "idx": 0,
+            "pattern": "S[1-9][0-9]*"
+          },
+          {
+            "type": "Option",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Annotation",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "NonTerminal",
+            "name": "Value",
+            "idx": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Value",
+    "orgText": "() => {\n      $.SUBRULE1($.AtomValue)\n      $.OR([\n        { \n          ALT: () => { // range                         \n            $.CONSUME(Dots)\n            $.SUBRULE2($.AtomValue)\n          }\n        },\n        { \n          ALT: () => {\n            $.CONSUME(SetOr)\n            $.AT_LEAST_ONE_SEP({\n              SEP: SetOr,\n              DEF: () => $.SUBRULE3($.AtomValue)\n            })\n          }\n        },\n        { ALT: () => {} }\n      ])\n    }",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "AtomValue",
+        "idx": 1
+      },
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Dots",
+                "label": "...",
+                "idx": 0,
+                "pattern": "\\.\\.\\."
+              },
+              {
+                "type": "NonTerminal",
+                "name": "AtomValue",
+                "idx": 2
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "SetOr",
+                "label": "|",
+                "idx": 0,
+                "pattern": "\\|"
+              },
+              {
+                "type": "RepetitionMandatoryWithSeparator",
+                "idx": 0,
+                "separator": {
+                  "type": "Terminal",
+                  "name": "SetOr",
+                  "label": "|",
+                  "idx": 1,
+                  "pattern": "\\|"
+                },
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "AtomValue",
+                    "idx": 3
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "AtomValue",
+    "orgText": "() => {\n      $.MANY1(() => $.CONSUME(Not))\n      $.SUBRULE($.Atom)\n      $.MANY2(() => $.SUBRULE($.Attribute))\n    }",
+    "definition": [
+      {
+        "type": "Repetition",
+        "idx": 1,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "Not",
+            "label": "!",
+            "idx": 0,
+            "pattern": "!"
+          }
+        ]
+      },
+      {
+        "type": "NonTerminal",
+        "name": "Atom",
+        "idx": 0
+      },
+      {
+        "type": "Repetition",
+        "idx": 2,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "Attribute",
+            "idx": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "AnyValue",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => $.SUBRULE($.Value)},\n        {ALT: () => $.CONSUME(UnquotedString)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Value",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "UnquotedString",
+                "label": "UnquotedString",
+                "idx": 0,
+                "pattern": "[a-zA-Z].*"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Attribute",
+    "orgText": "() => {\n      $.CONSUME(Dot)\n      $.CONSUME(AttributeName)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "Dot",
+        "label": ".",
+        "idx": 0,
+        "pattern": "\\."
+      },
+      {
+        "type": "Terminal",
+        "name": "AttributeName",
+        "label": "AttributeName",
+        "idx": 0,
+        "pattern": "[a-z][A-Za-z]*"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Assignment",
+    "orgText": "() => {\n      $.CONSUME(Variable)\n      $.CONSUME(AssignmentOperator)\n      $.SUBRULE($.AnyValue)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "Variable",
+        "label": "Variable",
+        "idx": 0,
+        "pattern": "\\?[?+*]?([a-zA-Z_][a-zA-Z0-9_-]*)?"
+      },
+      {
+        "type": "Terminal",
+        "name": "AssignmentOperator",
+        "label": ":=",
+        "idx": 0,
+        "pattern": ":="
+      },
+      {
+        "type": "NonTerminal",
+        "name": "AnyValue",
+        "idx": 0
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Atom",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => $.SUBRULE($.Entity)},\n        {ALT: () => $.SUBRULE($.MonolingualText)},\n        {ALT: () => $.CONSUME(QuotedString)},\n        {ALT: () => $.CONSUME(URL)},\n        {ALT: () => $.SUBRULE($.Quantity)},\n        {ALT: () => $.SUBRULE($.Time)},\n        {ALT: () => $.CONSUME(Coordinate)},\n        // TODO: Media, Tabular, Shape\n        {ALT: () => $.CONSUME(Novalue)},\n        {ALT: () => $.CONSUME(Somevalue)},\n        {ALT: () => $.CONSUME(True)},\n        {ALT: () => $.CONSUME(False)},\n        {ALT: () => $.CONSUME(Variable)},\n        {ALT: () => $.CONSUME(LanguageTag)},\n        {ALT: () => $.CONSUME(DataType)},\n        {ALT: () => $.CONSUME(Empty)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Entity",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "MonolingualText",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "QuotedString",
+                "label": "QuotedString",
+                "idx": 0,
+                "pattern": "\"(:?[^\\\\\"'\\n\\r]+|\\\\(:?[bfnrtv\"\\\\/]|u[0-9a-fA-F]{4}))*\""
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "URL",
+                "label": "URL",
+                "idx": 0,
+                "pattern": "[a-z]+:\\/\\/[^\\s\\t<>\"{}|^`\\\\]+|<[a-z]+:\\/\\/[^\\s\\t<>\"{}|^`\\\\]+>"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Quantity",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Time",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Coordinate",
+                "label": "Coordinate",
+                "idx": 0,
+                "pattern": "[+-]?([0-9]*[.])?[0-9]+\\/[+-]?([0-9]*[.])?[0-9]+"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Novalue",
+                "label": "novalue",
+                "idx": 0,
+                "pattern": "novalue"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Somevalue",
+                "label": "somevalue",
+                "idx": 0,
+                "pattern": "somevalue"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "True",
+                "label": "True",
+                "idx": 0,
+                "pattern": "True"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "False",
+                "label": "False",
+                "idx": 0,
+                "pattern": "False"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Variable",
+                "label": "Variable",
+                "idx": 0,
+                "pattern": "\\?[?+*]?([a-zA-Z_][a-zA-Z0-9_-]*)?"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LanguageTag",
+                "label": "LanguageTag",
+                "idx": 0,
+                "pattern": "@[a-zA-Z]+(-[a-zA-Z0-9]+)*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "DataType",
+                "label": "DataType",
+                "idx": 0,
+                "pattern": "Item|Property|Lexeme|Sense|Form|String|Text|Math|Time|Id|Url|Quantity|Coordinate|Shape|Media|Tabular|Bool|Set|Range|DataType|Entity"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Empty",
+                "label": "Empty",
+                "idx": 0,
+                "pattern": "Empty"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Entity",
+    "orgText": "() => {\n      $.SUBRULE($.EntityId)\n      $.OPTION( () => $.SUBRULE($.Annotation) )\n    }",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "EntityId",
+        "idx": 0
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "Annotation",
+            "idx": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "EntityId",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => $.CONSUME(ItemId)},\n        {ALT: () => $.CONSUME(PropertyId)},\n        {ALT: () => $.CONSUME(LexemeId)},\n        {ALT: () => $.CONSUME(FormId)},\n        {ALT: () => $.CONSUME(SenseId)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "ItemId",
+                "label": "ItemId",
+                "idx": 0,
+                "pattern": "Q[1-9][0-9]*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PropertyId",
+                "label": "PropertyId",
+                "idx": 0,
+                "pattern": "P[1-9][0-9]*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LexemeId",
+                "label": "LexemeId",
+                "idx": 0,
+                "pattern": "L[1-9][0-9]*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "FormId",
+                "label": "FormId",
+                "idx": 0,
+                "pattern": "L[1-9][0-9]*-F[1-9][0-9]*"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "SenseId",
+                "label": "SenseId",
+                "idx": 0,
+                "pattern": "L[1-9][0-9]*-S[1-9][0-9]*"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Annotation",
+    "orgText": "() => {\n      $.CONSUME(AnnotationString),\n      $.OPTION( () => $.CONSUME(LanguageTag) )\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "AnnotationString",
+        "label": "AnnotationString",
+        "idx": 0,
+        "pattern": "'(:?[^\\\\\"'\\n\\r]+|\\\\(:?[bfnrtv\"\\\\/]|u[0-9a-fA-F]{4}))*'"
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "LanguageTag",
+            "label": "LanguageTag",
+            "idx": 0,
+            "pattern": "@[a-zA-Z]+(-[a-zA-Z0-9]+)*"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "MonolingualText",
+    "orgText": "() => {\n      $.CONSUME(QuotedString),\n      $.CONSUME(LanguageTag)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "QuotedString",
+        "label": "QuotedString",
+        "idx": 0,
+        "pattern": "\"(:?[^\\\\\"'\\n\\r]+|\\\\(:?[bfnrtv\"\\\\/]|u[0-9a-fA-F]{4}))*\""
+      },
+      {
+        "type": "Terminal",
+        "name": "LanguageTag",
+        "label": "LanguageTag",
+        "idx": 0,
+        "pattern": "@[a-zA-Z]+(-[a-zA-Z0-9]+)*"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Time",
+    "orgText": "() => {\n      $.CONSUME(DateValue)\n      $.OPTION1(() => $.CONSUME(TimeValue))\n      $.OPTION2(() => $.CONSUME(TimePrecision))\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "DateValue",
+        "label": "DateValue",
+        "idx": 0,
+        "pattern": "[+-]?[0-9][0-9][0-9][0-9]+(-[0-9]{2}(-[0-9]{2})?)?"
+      },
+      {
+        "type": "Option",
+        "idx": 1,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "TimeValue",
+            "label": "TimeValue",
+            "idx": 0,
+            "pattern": "T[0-9]{2}(:[0-9]{2}(:[0-9]{2})?)?(Z|[+-][0-9]{2}(:[0-9]{2})?)?"
+          }
+        ]
+      },
+      {
+        "type": "Option",
+        "idx": 2,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "TimePrecision",
+            "label": "TimePrecision",
+            "idx": 0,
+            "pattern": "\\/([0-9]+|century|decade|year|month|day|hour|minute|second)"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Quantity",
+    "orgText": "() => {\n      $.CONSUME(QuantityValue)\n      $.OPTION1(() => {\n        $.CONSUME(UnitId) \n        $.OPTION2(() => $.SUBRULE($.Annotation))\n      })\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "QuantityValue",
+        "label": "QuantityValue",
+        "idx": 0,
+        "pattern": "[+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?(~|!|((Â±|[+]-|[+]\\/-)[+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?)|[[][+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?,[+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?\\])?"
+      },
+      {
+        "type": "Option",
+        "idx": 1,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "UnitId",
+            "label": "UnitId",
+            "idx": 0,
+            "pattern": "U[1-9][0-9]*"
+          },
+          {
+            "type": "Option",
+            "idx": 2,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "Annotation",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Comparison",
+    "orgText": "() => {\n      $.SUBRULE($.ComparisonOperator)\n      $.SUBRULE3($.Value)\n    }",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "ComparisonOperator",
+        "idx": 0
+      },
+      {
+        "type": "NonTerminal",
+        "name": "Value",
+        "idx": 3
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ComparisonOperator",
+    "orgText": "() => {\n      $.OR([\n        {ALT: () => $.CONSUME(RegexMatch)},\n        {ALT: () => $.CONSUME(RegexNotMatch)},\n        {ALT: () => $.CONSUME(StrictEqual)},\n        {ALT: () => $.CONSUME(StrictNotEqual)},\n        {ALT: () => $.CONSUME(Equal)},\n        {ALT: () => $.CONSUME(NotEqual)},\n        {ALT: () => $.CONSUME(GreaterOrEqual)},\n        {ALT: () => $.CONSUME(Greater)},\n        {ALT: () => $.CONSUME(LessOrEqual)},\n        {ALT: () => $.CONSUME(Less)},\n        {ALT: () => $.CONSUME(An)},\n        {ALT: () => $.CONSUME(In)},\n      ])\n    }",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "RegexMatch",
+                "label": "=~",
+                "idx": 0,
+                "pattern": "=~"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "RegexNotMatch",
+                "label": "!~",
+                "idx": 0,
+                "pattern": "!~"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "StrictEqual",
+                "label": "===",
+                "idx": 0,
+                "pattern": "==="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "StrictNotEqual",
+                "label": "!==",
+                "idx": 0,
+                "pattern": "!=="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Equal",
+                "label": "==",
+                "idx": 0,
+                "pattern": "=="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "NotEqual",
+                "label": "!=",
+                "idx": 0,
+                "pattern": "!="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "GreaterOrEqual",
+                "label": ">=",
+                "idx": 0,
+                "pattern": ">="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Greater",
+                "label": ">",
+                "idx": 0,
+                "pattern": ">"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LessOrEqual",
+                "label": "<=",
+                "idx": 0,
+                "pattern": "<="
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Less",
+                "label": "<",
+                "idx": 0,
+                "pattern": "<"
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "An",
+                "label": "a",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Flat",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "In",
+                "label": "in",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "Rule",
+    "orgText": "() => {\n      $.CONSUME(If)\n      $.SUBRULE($.Value)\n      $.CONSUME1(Colon)\n      $.CONSUME1(EOL)\n      $.SUBRULE1($.ScriptBlock)\n      /*      $.OR([\n        {\n          // not sure why this is needed?!\n          GATE: () => \n            this.LA(1).tokenType === EOL && this.LA(2).tokenType === Else,\n          ALT: () => {\n            $.CONSUME2(EOL)\n            $.CONSUME2(Else)\n            $.SUBRULE($.ElseScript)\n          }\n        },\n        {ALT: () => { }},\n      ])*/\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "If",
+        "label": "If",
+        "idx": 0,
+        "pattern": "if"
+      },
+      {
+        "type": "NonTerminal",
+        "name": "Value",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "Colon",
+        "label": ":",
+        "idx": 1,
+        "pattern": ":"
+      },
+      {
+        "type": "Terminal",
+        "name": "EOL",
+        "label": "EOL",
+        "idx": 1,
+        "pattern": "\\n|\\r\\n?|[ \\t]*;[ \\t]*"
+      },
+      {
+        "type": "NonTerminal",
+        "name": "ScriptBlock",
+        "idx": 1
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ElseScript",
+    "orgText": "() => {\n      $.CONSUME2(Colon)\n      $.CONSUME(EOL)\n      $.SUBRULE2($.ScriptBlock)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "Colon",
+        "label": ":",
+        "idx": 2,
+        "pattern": ":"
+      },
+      {
+        "type": "Terminal",
+        "name": "EOL",
+        "label": "EOL",
+        "idx": 0,
+        "pattern": "\\n|\\r\\n?|[ \\t]*;[ \\t]*"
+      },
+      {
+        "type": "NonTerminal",
+        "name": "ScriptBlock",
+        "idx": 2
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ScriptBlock",
+    "orgText": "() => {\n      $.CONSUME(Indent)\n      $.SUBRULE($.Script)\n      $.CONSUME(Dedent)\n    }",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "Indent",
+        "label": "Indent",
+        "idx": 0
+      },
+      {
+        "type": "NonTerminal",
+        "name": "Script",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "Dedent",
+        "label": "Dedent",
+        "idx": 0
+      }
+    ]
+  }
+];
+</script>
+
+<script>
+    var diagramsDiv = document.getElementById("diagrams");
+    main.drawDiagramsFromSerializedGrammar(serializedGrammar, diagramsDiv);
+</script>
+
+</div>
+<h1 id="references">References</h1>
+<ul>
+<li>Wikibase DataModel. <a href="https://github.com/wmde/WikibaseDataModel" class="uri">https://github.com/wmde/WikibaseDataModel</a> (canonical implementation of the database model)</li>
+<li>Wikibase DataModel Serialization. <a href="https://github.com/wmde/WikibaseDataModelSerialization" class="uri">https://github.com/wmde/WikibaseDataModelSerialization</a> (JSON format)</li>
+<li>…</li>
+</ul>
+</div>
+</body>
+</html>
